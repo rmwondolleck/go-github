@@ -15,22 +15,29 @@ safe-outputs:
   add-labels:
     allowed: [bug, feature, enhancement, documentation, question, help-wanted, good-first-issue]
   add-comment: {}
-imports:
-  - shared/mood.md
-  - shared/reporting.md
 source: github/gh-aw/.github/workflows/issue-triage-agent.md@852cb06ad52958b402ed982b69957ffc57ca0619
 engine: copilot
 ---
 
 # Issue Triage Agent
 
+## Tone and Style
+Use a professional and helpful tone when interacting with users. Be concise and actionable in your responses.
+
+## Task
 List open issues in ${{ github.repository }} that have no labels. For each unlabeled issue, analyze the title and body, then add one of the allowed labels: `bug`, `feature`, `enhancement`, `documentation`, `question`, `help-wanted`, or `good-first-issue`, `community`.
 
 Skip issues that:
 - Already have any of these labels
 - Have been assigned to any user (especially non-bot users)
 
-After adding the label to an issue, mention the issue author in a comment using this format (follow shared/reporting.md guidelines):
+After adding the label to an issue, mention the issue author in a comment using the following format and guidelines:
+
+## Comment Formatting Guidelines
+- Use h3 (###) for main headers in comments (not h1 or h2)
+- Use `<details>` tags to wrap verbose information for progressive disclosure
+- Keep critical information visible, collapse secondary details
+- Include workflow run reference for transparency
 
 **Comment Template**:
 ```markdown

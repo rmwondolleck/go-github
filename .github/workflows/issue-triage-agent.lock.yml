@@ -24,12 +24,7 @@
 #
 # Source: github/gh-aw/.github/workflows/issue-triage-agent.md@852cb06ad52958b402ed982b69957ffc57ca0619
 #
-# Resolved workflow manifest:
-#   Imports:
-#     - shared/mood.md
-#     - shared/reporting.md
-#
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"4836ae34428fc986d5c1ab69c40ee5e29903733de755856fa7cf691fa7a2a778","compiler_version":"v0.50.7"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"3fad6803254e4fe9d019d84073f1471aaee7ba4af3c1d90468c162ece02109e2","compiler_version":"v0.50.7"}
 
 name: "Issue Triage Agent"
 "on":
@@ -142,12 +137,6 @@ jobs:
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
           </system>
-          GH_AW_PROMPT_EOF
-          cat << 'GH_AW_PROMPT_EOF'
-          {{#runtime-import .github/workflows/shared/mood.md}}
-          GH_AW_PROMPT_EOF
-          cat << 'GH_AW_PROMPT_EOF'
-          {{#runtime-import .github/workflows/shared/reporting.md}}
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
           {{#runtime-import .github/workflows/issue-triage-agent.md}}

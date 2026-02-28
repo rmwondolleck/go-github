@@ -97,6 +97,11 @@ jobs:
             setupGlobals(core, github, context, exec, io);
             const { main } = require('/opt/gh-aw/actions/compute_text.cjs');
             await main();
+      - name: Checkout repository for runtime imports
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/workflows
       - name: Create prompt with built-in context
         env:
           GH_AW_PROMPT: /tmp/gh-aw/aw-prompts/prompt.txt

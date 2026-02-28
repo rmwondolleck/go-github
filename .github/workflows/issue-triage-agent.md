@@ -2,6 +2,8 @@
 timeout-minutes: 5
 strict: true
 on:
+  issues:
+    types: [opened]
   schedule: "0 14 * * 1-5"
   workflow_dispatch:
 permissions:
@@ -24,8 +26,16 @@ engine: copilot
 Use a professional and helpful tone when interacting with users. Be concise and actionable in your responses.
 
 ## Task
+
+This workflow can be triggered in two ways:
+
+### When triggered by issue creation (issues: opened)
+Process the single issue that triggered the workflow (issue number available in context). Analyze the title and body, then add one of the allowed labels.
+
+### When triggered by schedule or manual dispatch
 List open issues in ${{ github.repository }} that have no labels. For each unlabeled issue, analyze the title and body, then add one of the allowed labels: `bug`, `feature`, `enhancement`, `documentation`, `question`, `help-wanted`, or `good-first-issue`, `community`.
 
+### For all triggers
 Skip issues that:
 - Already have any of these labels
 - Have been assigned to any user (especially non-bot users)

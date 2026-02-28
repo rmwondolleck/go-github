@@ -1,0 +1,33 @@
+name: Reusable Test Workflow
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: 'Go version to use for testing'
+        required: false
+        type: string
+        default: '1.24'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Display coverage
+        run: go tool cover -func=coverage.out

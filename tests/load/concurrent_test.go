@@ -36,11 +36,7 @@ func TestConcurrentHealthRequests(t *testing.T) {
 
 			reqStart := time.Now()
 			w := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/health", nil)
-			if err != nil {
-				t.Errorf("Failed to create request: %v", err)
-				return
-			}
+			req := httptest.NewRequest("GET", "/health", nil)
 			srv.Router().ServeHTTP(w, req)
 			reqDuration := time.Since(reqStart)
 
@@ -88,11 +84,7 @@ func TestConcurrentAPIv1Requests(t *testing.T) {
 
 			reqStart := time.Now()
 			w := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "/api/v1", nil)
-			if err != nil {
-				t.Errorf("Failed to create request: %v", err)
-				return
-			}
+			req := httptest.NewRequest("GET", "/api/v1", nil)
 			srv.Router().ServeHTTP(w, req)
 			reqDuration := time.Since(reqStart)
 
@@ -143,11 +135,7 @@ func TestMemoryLeakDetection(t *testing.T) {
 			go func() {
 				defer wg.Done()
 				w := httptest.NewRecorder()
-				req, err := http.NewRequest("GET", "/health", nil)
-				if err != nil {
-					t.Errorf("Failed to create request: %v", err)
-					return
-				}
+				req := httptest.NewRequest("GET", "/health", nil)
 				srv.Router().ServeHTTP(w, req)
 			}()
 		}
@@ -249,11 +237,7 @@ func BenchmarkConcurrentHealthRequests(b *testing.B) {
 			go func() {
 				defer wg.Done()
 				w := httptest.NewRecorder()
-				req, err := http.NewRequest("GET", "/health", nil)
-				if err != nil {
-					b.Errorf("Failed to create request: %v", err)
-					return
-				}
+				req := httptest.NewRequest("GET", "/health", nil)
 				srv.Router().ServeHTTP(w, req)
 			}()
 		}
@@ -274,11 +258,7 @@ func BenchmarkConcurrentAPIv1Requests(b *testing.B) {
 			go func() {
 				defer wg.Done()
 				w := httptest.NewRecorder()
-				req, err := http.NewRequest("GET", "/api/v1", nil)
-				if err != nil {
-					b.Errorf("Failed to create request: %v", err)
-					return
-				}
+				req := httptest.NewRequest("GET", "/api/v1", nil)
 				srv.Router().ServeHTTP(w, req)
 			}()
 		}

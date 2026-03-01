@@ -1,0 +1,139 @@
+package research
+
+import (
+	"encoding/json"
+	"testing"
+	"time"
+
+	jsoniter "github.com/json-iterator/go"
+)
+
+// bufferSize is the initial capacity for encoding buffers.
+// 8192 bytes is sufficient for encoding 50 devices (~6.5KB typical output)
+// while avoiding excessive memory allocation.
+const bufferSize = 8192
+
+// Device represents a HomeAssistant device with all its properties
+type Device struct {
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Type        string                 `json:"type"`
+	State       string                 `json:"state"`
+	Attributes  map[string]interface{} `json:"attributes"`
+	LastUpdated time.Time              `json:"last_updated"`
+}
+
+// generateTestDevices creates a slice of N test devices with realistic data
+func generateTestDevices(count int) []Device {
+	devices := make([]Device, count)
+	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
+	states := []string{"on", "off", "available", "unavailable"}
+	fixedTime := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+
+	for i := 0; i < count; i++ {
+		deviceType := deviceTypes[i%len(deviceTypes)]
+		deviceLetter := string(rune('a' + (i % 26)))
+		nameLetter := string(rune('A' + (i % 26)))
+		devices[i] = Device{
+			ID:    deviceType + ".device_" + deviceLetter,
+			Name:  "Test Device " + nameLetter,
+			Type:  deviceType,
+			State: states[i%len(states)],
+			Attributes: map[string]interface{}{
+				"friendly_name": "Test Device " + nameLetter,
+				"brightness":    128,
+				"temperature":   23.5,
+				"humidity":      65,
+				"battery":       95,
+			},
+			LastUpdated: fixedTime,
+		}
+	}
+
+	return devices
+}
+
+// BenchmarkStdlib_50Devices benchmarks stdlib encoding/json for encoding 50 devices
+func BenchmarkStdlib_50Devices(b *testing.B) {
+	devices := generateTestDevices(50)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := json.Marshal(devices)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// BenchmarkJsoniter_50Devices_Fastest benchmarks jsoniter with ConfigFastest for encoding 50 devices
+func BenchmarkJsoniter_50Devices_Fastest(b *testing.B) {
+	devices := generateTestDevices(50)
+	jsonAPI := jsoniter.ConfigFastest
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := jsonAPI.Marshal(devices)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// BenchmarkJsoniter_50Devices_Compatible benchmarks jsoniter with ConfigCompatibleWithStandardLibrary
+func BenchmarkJsoniter_50Devices_Compatible(b *testing.B) {
+	devices := generateTestDevices(50)
+	jsonAPI := jsoniter.ConfigCompatibleWithStandardLibrary
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := jsonAPI.Marshal(devices)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// BenchmarkStdlib_50Devices_Stream benchmarks stdlib encoding/json using Encoder (stream API)
+func BenchmarkStdlib_50Devices_Stream(b *testing.B) {
+	devices := generateTestDevices(50)
+	buf := make([]byte, 0, bufferSize)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		// Simulate writing to a buffer (like an HTTP response)
+		buffer := &bytesBuffer{buf: buf[:0]}
+		encoder := json.NewEncoder(buffer)
+		if err := encoder.Encode(devices); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+// BenchmarkJsoniter_50Devices_Stream benchmarks jsoniter using Stream API
+func BenchmarkJsoniter_50Devices_Stream(b *testing.B) {
+	devices := generateTestDevices(50)
+	jsonAPI := jsoniter.ConfigFastest
+	buf := make([]byte, 0, bufferSize)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		buffer := &bytesBuffer{buf: buf[:0]}
+		stream := jsonAPI.BorrowStream(buffer)
+		stream.WriteVal(devices)
+		if stream.Error != nil {
+			b.Fatal(stream.Error)
+		}
+		jsonAPI.ReturnStream(stream)
+	}
+}
+
+// bytesBuffer is a simple writer that appends to a byte slice
+type bytesBuffer struct {
+	buf []byte
+}
+
+func (b *bytesBuffer) Write(p []byte) (n int, err error) {
+	b.buf = append(b.buf, p...)
+	return len(p), nil
+}

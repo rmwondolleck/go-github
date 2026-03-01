@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestHealthEndpoint_Returns200 verifies that the health endpoint returns HTTP 200 status
-func TestHealthEndpoint_Returns200(t *testing.T) {
+// setupHealthTest creates a test server and makes a request to the health endpoint
+func setupHealthTest(t *testing.T) (*httptest.ResponseRecorder, *server.Server) {
 	gin.SetMode(gin.TestMode)
 
 	// Create server instance
@@ -29,6 +29,13 @@ func TestHealthEndpoint_Returns200(t *testing.T) {
 
 	// Execute request
 	srv.Router().ServeHTTP(w, req)
+
+	return w, srv
+}
+
+// TestHealthEndpoint_Returns200 verifies that the health endpoint returns HTTP 200 status
+func TestHealthEndpoint_Returns200(t *testing.T) {
+	w, _ := setupHealthTest(t)
 
 	// Assert response
 	assert.Equal(t, http.StatusOK, w.Code, "Health endpoint should return 200 OK")
@@ -36,25 +43,14 @@ func TestHealthEndpoint_Returns200(t *testing.T) {
 
 // TestHealthEndpoint_IncludesStatusAndUptime verifies the response includes required fields
 func TestHealthEndpoint_IncludesStatusAndUptime(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	// Create server instance
-	srv := server.New()
-
-	// Create test request
-	w := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/health", nil)
-	require.NoError(t, err)
-
-	// Execute request
-	srv.Router().ServeHTTP(w, req)
+	w, _ := setupHealthTest(t)
 
 	// Assert response status
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// Parse response body
 	var health models.HealthStatus
-	err = json.Unmarshal(w.Body.Bytes(), &health)
+	err := json.Unmarshal(w.Body.Bytes(), &health)
 	require.NoError(t, err, "Response should be valid JSON matching HealthStatus model")
 
 	// Verify required fields
@@ -82,7 +78,7 @@ func TestHealthEndpoint_ResponseUnder50ms(t *testing.T) {
 	req, err := http.NewRequest("GET", "/health", nil)
 	require.NoError(t, err)
 
-	// Measure response time
+	// Measure response time (cannot use helper as we need to time the request)
 	start := time.Now()
 	srv.Router().ServeHTTP(w, req)
 	duration := time.Since(start)

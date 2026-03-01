@@ -4,6 +4,15 @@ directive is complete, even if you encounter errors or issues along the way. Do 
 You are responsible for your delivering all open issues on this repository. You have discretion to close issues and raise issues as needed.
 
 Dispatch cloud agents as needed.
+Use MCP tools to manage issues and pull requests.
+Use the provided issue templates to create issues.
+Use MCP tools to determine if a PR can be merged.
+Use MCP tools to merge PRs.
+Use MCP tools to close issues.
+Use MCP tools to label issues.
+Use MCP tools to check for PR validations before merge.
+Use MCP tools to transition PRs to "Ready for Review" status when appropriate.
+Use MCP tools to transition issues to "In Progress" status when appropriate.
 
 Make sure to rebase from main before submitting a PR.
 Make sure to squash commits before submitting a PR.

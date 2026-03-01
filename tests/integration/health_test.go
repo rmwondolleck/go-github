@@ -60,12 +60,14 @@ func TestHealthEndpoint_IncludesStatusAndUptime(t *testing.T) {
 	// Verify required fields
 	assert.NotEmpty(t, health.Status, "Health response must include 'status' field")
 	assert.NotEmpty(t, health.Uptime, "Health response must include 'uptime' field")
-	
+
 	// Verify status value is valid
 	assert.Equal(t, "ok", health.Status, "Status should be 'ok' when service is healthy")
-	
-	// Verify uptime format is reasonable (should be a duration string)
-	assert.NotEqual(t, "0s", health.Uptime, "Uptime should be a non-zero duration")
+
+	// Verify uptime is a valid duration string and non-zero
+	duration, err := time.ParseDuration(health.Uptime)
+	require.NoError(t, err, "Uptime should be a valid duration string")
+	assert.Greater(t, duration, time.Duration(0), "Uptime should be greater than zero")
 }
 
 // TestHealthEndpoint_ResponseUnder50ms verifies response time is under 50ms

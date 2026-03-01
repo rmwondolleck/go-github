@@ -87,6 +87,6 @@ func TestHealthEndpoint_ResponseUnder50ms(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// Assert response time
-	assert.Less(t, duration.Milliseconds(), int64(50), 
+	assert.Less(t, duration.Milliseconds(), int64(50),
 		"Health endpoint should respond in under 50ms, got %v", duration)
 }

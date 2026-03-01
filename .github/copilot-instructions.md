@@ -13,6 +13,8 @@ Use MCP tools to label issues.
 Use MCP tools to check for PR validations before merge.
 Use MCP tools to transition PRs to "Ready for Review" status when appropriate.
 Use MCP tools to transition issues to "In Progress" status when appropriate.
+You can approve required workflows to run.
+You can approve necessary checks to pass.
 
 Make sure to rebase from main before submitting a PR.
 Make sure to squash commits before submitting a PR.

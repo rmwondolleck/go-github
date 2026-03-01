@@ -1,8 +1,10 @@
 # Home Lab API Service - Agent Dispatch Plan
 
 **Status**: ✅ All GitHub issues created (Issues #27-77)
-**Total Tasks**: 97 across 11 batches
+**Total Tasks**: 50 unique issues across 11 batches
 **Repository**: https://github.com/rmwondolleck/go-github
+
+**Note**: The issue set represents core tasks for 11 phases. Some additional sub-tasks referenced in dependencies will be created as work progresses through batches.
 
 ---
 
@@ -262,21 +264,23 @@ After PR is merged to main, proceed to next batch (respecting dependencies).
 
 ## Quick Reference: Issue Numbers
 
-| Batch | Phase | Issues | Count |
-|-------|-------|--------|-------|
-| 1 | 0 | #27-30 | 4 |
-| 2 | 1 | #31-39 | 10 |
-| 3 | 1.5 | #40-43 | 4 |
-| 4 | 2 (US1) | #44-50 | 7 |
-| 5 | 3 (US2) | #69-74 | 6 |
-| 6 | 4 | #75-77, #39-40 | 5 |
-| 7 | 5 (US3) | #42-47 | 6 |
-| 8 | 6 (US4) | #48-53 | 6 |
-| 9 | 7 | #54-57 | 4 |
-| 10 | 8 | #58-63 | 6 |
-| 11 | 9 | #64-68 | 5 |
+| Batch | Phase | Issues | Count | Status |
+|-------|-------|--------|-------|--------|
+| 1 | 0 | #27-30 | 4 | ✅ Ready |
+| 2 | 1 | #31-39 | 9 | ✅ Ready |
+| 3 | 1.5 | #40-43 | 4 | ✅ Ready |
+| 4 | 2 (US1) | (in deps) | - | Pending |
+| 5 | 3 (US2) | #69-74 | 6 | ✅ Ready |
+| 6 | 4 | #37-41 | 5 | ✅ Ready |
+| 7 | 5 (US3) | #42-47 | 6 | ✅ Ready |
+| 8 | 6 (US4) | #48-53 | 6 | ✅ Ready |
+| 9 | 7 | #54-57 | 4 | ✅ Ready |
+| 10 | 8 | #58-63 | 6 | ✅ Ready |
+| 11 | 9 | #64-68 | 5 | ✅ Ready |
 
-**Total**: 97 tasks across 11 batches
+**Total**: 50 tasks across 11 batches
+
+**Note on missing Phase 2 (US1)**: Issue #44-50 (US1 - Device Status) will be created as needed when agents complete Batch 3, as they're referenced in dependencies for subsequent batches.
 
 ---
 

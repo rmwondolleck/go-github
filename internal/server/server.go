@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"sync"
 
 	"go-github/internal/middleware"
 
@@ -12,6 +13,7 @@ import (
 type Server struct {
 	router     *gin.Engine
 	httpServer *http.Server
+	mu         sync.RWMutex
 }
 
 // New creates a new server instance with middleware chain
@@ -44,10 +46,12 @@ func New() *Server {
 
 // Run starts the HTTP server on the specified port
 func (s *Server) Run(port string) error {
+	s.mu.Lock()
 	s.httpServer = &http.Server{
 		Addr:    ":" + port,
 		Handler: s.router,
 	}
+	s.mu.Unlock()
 	return s.httpServer.ListenAndServe()
 }
 

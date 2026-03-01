@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"log/slog"
+	"net/http"
 	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
@@ -19,10 +20,10 @@ func Recovery() gin.HandlerFunc {
 					"error", err,
 					"stack", string(debug.Stack()),
 				)
-				c.AbortWithStatusJSON(500, models.ErrorResponse{
+				c.AbortWithStatusJSON(http.StatusInternalServerError, models.ErrorResponse{
 					Error:   "internal_server_error",
 					Message: "An unexpected error occurred",
-					Code:    500,
+					Code:    http.StatusInternalServerError,
 				})
 			}
 		}()

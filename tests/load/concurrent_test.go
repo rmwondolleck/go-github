@@ -15,13 +15,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	// Number of concurrent requests for tests and benchmarks
+	concurrentRequests = 100
+)
+
 // TestConcurrentHealthRequests tests 100 concurrent requests to the health endpoint
 func TestConcurrentHealthRequests(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Arrange
 	srv := server.New()
-	concurrentRequests := 100
 	var wg sync.WaitGroup
 	responseTimes := make([]time.Duration, concurrentRequests)
 	var mu sync.Mutex
@@ -69,7 +73,6 @@ func TestConcurrentAPIv1Requests(t *testing.T) {
 
 	// Arrange
 	srv := server.New()
-	concurrentRequests := 100
 	var wg sync.WaitGroup
 	responseTimes := make([]time.Duration, concurrentRequests)
 	var mu sync.Mutex
@@ -236,7 +239,7 @@ func BenchmarkConcurrentHealthRequests(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var wg sync.WaitGroup
-		for j := 0; j < 100; j++ {
+		for j := 0; j < concurrentRequests; j++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -257,7 +260,7 @@ func BenchmarkConcurrentAPIv1Requests(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var wg sync.WaitGroup
-		for j := 0; j < 100; j++ {
+		for j := 0; j < concurrentRequests; j++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()

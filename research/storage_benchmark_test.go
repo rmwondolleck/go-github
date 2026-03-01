@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-// Device represents a simple device structure for benchmarking
-type Device struct {
+// StorageDevice represents a simple device structure for storage benchmarking
+type StorageDevice struct {
 	ID     string
 	Name   string
 	Status string
@@ -23,16 +23,16 @@ func NewSyncMapStorage() *SyncMapStorage {
 	return &SyncMapStorage{}
 }
 
-func (s *SyncMapStorage) Store(id string, device Device) {
+func (s *SyncMapStorage) Store(id string, device StorageDevice) {
 	s.data.Store(id, device)
 }
 
-func (s *SyncMapStorage) Load(id string) (Device, bool) {
+func (s *SyncMapStorage) Load(id string) (StorageDevice, bool) {
 	val, ok := s.data.Load(id)
 	if !ok {
-		return Device{}, false
+		return StorageDevice{}, false
 	}
-	return val.(Device), true
+	return val.(StorageDevice), true
 }
 
 func (s *SyncMapStorage) Delete(id string) {
@@ -42,22 +42,22 @@ func (s *SyncMapStorage) Delete(id string) {
 // RWMutexStorage implements device storage using RWMutex and map
 type RWMutexStorage struct {
 	mu   sync.RWMutex
-	data map[string]Device
+	data map[string]StorageDevice
 }
 
 func NewRWMutexStorage() *RWMutexStorage {
 	return &RWMutexStorage{
-		data: make(map[string]Device),
+		data: make(map[string]StorageDevice),
 	}
 }
 
-func (s *RWMutexStorage) Store(id string, device Device) {
+func (s *RWMutexStorage) Store(id string, device StorageDevice) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data[id] = device
 }
 
-func (s *RWMutexStorage) Load(id string) (Device, bool) {
+func (s *RWMutexStorage) Load(id string) (StorageDevice, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	device, ok := s.data[id]
@@ -71,13 +71,13 @@ func (s *RWMutexStorage) Delete(id string) {
 }
 
 // Helper function to populate storage with test data
-func populateStorage(count int) ([]Device, []string) {
-	devices := make([]Device, count)
+func populateStorage(count int) ([]StorageDevice, []string) {
+	devices := make([]StorageDevice, count)
 	ids := make([]string, count)
 
 	for i := 0; i < count; i++ {
 		id := fmt.Sprintf("device_%d", i)
-		devices[i] = Device{
+		devices[i] = StorageDevice{
 			ID:     id,
 			Name:   fmt.Sprintf("Device %d", i),
 			Status: "online",
@@ -212,7 +212,7 @@ func BenchmarkSyncMapMixedWorkload(b *testing.B) {
 			id := ids[i%len(ids)]
 			// 90% reads, 10% writes
 			if i%10 == 0 {
-				device := Device{
+				device := StorageDevice{
 					ID:     id,
 					Name:   fmt.Sprintf("Updated Device %d", i),
 					Status: "online",
@@ -244,7 +244,7 @@ func BenchmarkRWMutexMixedWorkload(b *testing.B) {
 			id := ids[i%len(ids)]
 			// 90% reads, 10% writes
 			if i%10 == 0 {
-				device := Device{
+				device := StorageDevice{
 					ID:     id,
 					Name:   fmt.Sprintf("Updated Device %d", i),
 					Status: "online",
@@ -276,7 +276,7 @@ func BenchmarkSyncMapWriteHeavy(b *testing.B) {
 			id := ids[i%len(ids)]
 			// 50% reads, 50% writes
 			if i%2 == 0 {
-				device := Device{
+				device := StorageDevice{
 					ID:     id,
 					Name:   fmt.Sprintf("Updated Device %d", i),
 					Status: "online",
@@ -308,7 +308,7 @@ func BenchmarkRWMutexWriteHeavy(b *testing.B) {
 			id := ids[i%len(ids)]
 			// 50% reads, 50% writes
 			if i%2 == 0 {
-				device := Device{
+				device := StorageDevice{
 					ID:     id,
 					Name:   fmt.Sprintf("Updated Device %d", i),
 					Status: "online",

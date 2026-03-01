@@ -75,7 +75,7 @@ func createTestDevice(id string) *Device {
 	}
 }
 
-// BenchmarkSyncMap_ConcurrentReads benchmarks concurrent reads with sync.Map (100 goroutines)
+// BenchmarkSyncMap_ConcurrentReads benchmarks concurrent reads with sync.Map (RunParallel uses GOMAXPROCS goroutines)
 func BenchmarkSyncMap_ConcurrentReads(b *testing.B) {
 	storage := NewSyncMapStorage()
 	
@@ -94,7 +94,7 @@ func BenchmarkSyncMap_ConcurrentReads(b *testing.B) {
 	})
 }
 
-// BenchmarkRWMutex_ConcurrentReads benchmarks concurrent reads with RWMutex (100 goroutines)
+// BenchmarkRWMutex_ConcurrentReads benchmarks concurrent reads with RWMutex (RunParallel uses GOMAXPROCS goroutines)
 func BenchmarkRWMutex_ConcurrentReads(b *testing.B) {
 	storage := NewRWMutexStorage()
 	

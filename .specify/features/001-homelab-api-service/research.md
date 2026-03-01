@@ -165,17 +165,17 @@ Each benchmark was run with:
 ### Concurrent Reads (RunParallel)
 | Implementation | Time/op | Memory/op | Allocs/op |
 |----------------|---------|-----------|-----------|
-| sync.Map | 13.48 ns | 0 B | 0 |
-| RWMutex | 48.58 ns | 0 B | 0 |
-| **Performance** | **sync.Map 3.6x faster** | **Equal** | **Equal** |
+| sync.Map | 9.83 ns | 0 B | 0 |
+| RWMutex | 46.81 ns | 0 B | 0 |
+| **Performance** | **sync.Map 4.8x faster** | **Equal** | **Equal** |
 
-**Key Finding**: sync.Map is **3.6x faster** than RWMutex for concurrent reads with zero allocations for both.
+**Key Finding**: sync.Map is **4.8x faster** than RWMutex for concurrent reads with zero allocations for both.
 
 ### Mixed Workload (90% reads, 10% writes)
 | Implementation | Time/op | Memory/op | Allocs/op |
 |----------------|---------|-----------|-----------|
-| sync.Map | 96.48 ns | 75 B | 2 |
-| RWMutex | 214.9 ns | 69 B | 2 |
+| sync.Map | 101.3 ns | 75 B | 2 |
+| RWMutex | 225.3 ns | 69 B | 2 |
 | **Performance** | **sync.Map 2.2x faster** | **+6 B** | **Equal** |
 
 **Key Finding**: sync.Map is **2.2x faster** than RWMutex for mixed read/write workloads with minimal additional memory overhead (6 bytes).
@@ -183,36 +183,36 @@ Each benchmark was run with:
 ### 100 Goroutines Concurrent Reads
 | Implementation | Time/op | Memory/op | Allocs/op |
 |----------------|---------|-----------|-----------|
-| sync.Map | 652,238 ns | 223,701 B | 17,642 |
-| RWMutex | 678,922 ns | 223,686 B | 17,642 |
-| **Performance** | **sync.Map 3.9% faster** | **+15 B** | **Equal** |
+| sync.Map | 652,380 ns | 223,682 B | 17,642 |
+| RWMutex | 711,042 ns | 223,671 B | 17,642 |
+| **Performance** | **sync.Map 8.2% faster** | **+11 B** | **Equal** |
 
-**Key Finding**: With 100 goroutines each performing 100 reads (10,000 total operations), sync.Map is **3.9% faster** with nearly identical memory characteristics.
+**Key Finding**: With 100 goroutines each performing 100 reads (10,000 total operations), sync.Map is **8.2% faster** with nearly identical memory characteristics.
 
 ### O(1) Lookup Performance Validation
 
 #### sync.Map Lookup Times by Dataset Size
 | Dataset Size | Time/op | Growth |
 |--------------|---------|--------|
-| 100 | 104.9 ns | baseline |
-| 1,000 | 119.9 ns | +14.3% |
-| 10,000 | 129.0 ns | +23.0% |
+| 100 | 102.8 ns | baseline |
+| 1,000 | 119.6 ns | +16.3% |
+| 10,000 | 125.0 ns | +21.6% |
 
 #### RWMutex Lookup Times by Dataset Size
 | Dataset Size | Time/op | Growth |
 |--------------|---------|--------|
-| 100 | 92.81 ns | baseline |
-| 1,000 | 109.1 ns | +17.5% |
-| 10,000 | 115.1 ns | +24.0% |
+| 100 | 95.80 ns | baseline |
+| 1,000 | 118.4 ns | +23.6% |
+| 10,000 | 120.4 ns | +25.7% |
 
-**Key Finding**: Both implementations demonstrate **O(1) lookup performance**. Despite 100x increase in dataset size (100→10,000), lookup time increased by only ~23-24% for both implementations, confirming constant-time hash map lookups. The slight increase is due to cache effects and memory access patterns, not algorithmic complexity.
+**Key Finding**: Both implementations demonstrate **O(1) lookup performance**. Despite 100x increase in dataset size (100→10,000), lookup time increased by only ~22-26% for both implementations, confirming constant-time hash map lookups. The slight increase is due to cache effects and memory access patterns, not algorithmic complexity.
 
 ## Performance Analysis
 
 ### Time Performance
-- **Concurrent reads**: sync.Map is **3.6x faster** (13.48 ns vs 48.58 ns)
-- **Mixed workload**: sync.Map is **2.2x faster** (96.48 ns vs 214.9 ns)
-- **100 goroutines**: sync.Map is **3.9% faster** (652 μs vs 679 μs)
+- **Concurrent reads**: sync.Map is **4.8x faster** (9.83 ns vs 46.81 ns)
+- **Mixed workload**: sync.Map is **2.2x faster** (101.3 ns vs 225.3 ns)
+- **100 goroutines**: sync.Map is **8.2% faster** (652 μs vs 711 μs)
 - **Single lookup**: RWMutex is marginally faster for single-threaded access due to lower overhead
 
 ### Memory Performance
@@ -221,7 +221,7 @@ Each benchmark was run with:
 - Allocation patterns are identical for both approaches
 
 ### Scalability
-- sync.Map scales better with increasing concurrency (3.6x advantage)
+- sync.Map scales better with increasing concurrency (4.8x advantage)
 - Both maintain O(1) lookup performance regardless of dataset size
 - sync.Map's lock-free read operations provide superior throughput under contention
 
@@ -229,7 +229,7 @@ Each benchmark was run with:
 
 Based on benchmark results:
 
-1. **Superior Read Performance**: 3.6x faster for concurrent reads, the primary use case
+1. **Superior Read Performance**: 4.8x faster for concurrent reads, the primary use case
 2. **Better Mixed Workload Performance**: 2.2x faster even with 10% writes
 3. **Zero Allocation Reads**: No memory allocation overhead for read operations
 4. **Lock-Free Reads**: Non-blocking reads improve throughput under high concurrency
@@ -240,7 +240,7 @@ Based on benchmark results:
 ✅ **APPROVED**: Use **sync.Map** for device storage
 
 **Rationale**:
-1. **3.6x faster** for concurrent reads (the dominant operation in a homelab API)
+1. **4.8x faster** for concurrent reads (the dominant operation in a homelab API)
 2. Still **2.2x faster** for mixed workloads with frequent writes
 3. Zero-allocation reads minimize GC pressure
 4. O(1) lookup performance validated across all dataset sizes
@@ -255,7 +255,7 @@ Based on benchmark results:
 ## Trade-offs
 
 ### sync.Map Pros:
-- 3.6x faster concurrent reads
+- 4.8x faster concurrent reads
 - Lock-free read operations
 - Zero allocations for reads
 - Better scalability under contention
@@ -273,14 +273,14 @@ Based on benchmark results:
 - Familiar patterns for developers
 
 ### RWMutex Cons:
-- 3.6x slower for concurrent reads
+- 4.8x slower for concurrent reads
 - 2.2x slower for mixed workloads
 - Read operations still require lock acquisition
 - Contention increases with concurrent readers
 
 ## Conclusion
 
-For a homelab API service with read-heavy workloads (device state queries), **sync.Map is the clear winner** with **3.6x better performance** for concurrent reads and **2.2x better performance** for mixed workloads. The O(1) lookup performance is validated across dataset sizes from 100 to 10,000 devices.
+For a homelab API service with read-heavy workloads (device state queries), **sync.Map is the clear winner** with **4.8x better performance** for concurrent reads and **2.2x better performance** for mixed workloads. The O(1) lookup performance is validated across dataset sizes from 100 to 10,000 devices.
 
 The performance advantage of sync.Map becomes even more pronounced as concurrent load increases, making it the optimal choice for the device storage layer.
 

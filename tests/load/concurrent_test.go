@@ -18,6 +18,10 @@ import (
 const (
 	// Number of concurrent requests for tests and benchmarks
 	concurrentRequests = 100
+	// Pause duration between batches in memory leak test
+	batchPauseDuration = 10 * time.Millisecond
+	// Wait time for GC completion
+	gcCompletionDelay = 100 * time.Millisecond
 )
 
 // TestConcurrentHealthRequests tests 100 concurrent requests to the health endpoint
@@ -145,12 +149,12 @@ func TestMemoryLeakDetection(t *testing.T) {
 		wg.Wait()
 
 		// Brief pause between batches
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(batchPauseDuration)
 	}
 
 	// Force garbage collection to clean up temporary allocations
 	runtime.GC()
-	time.Sleep(100 * time.Millisecond) // Give GC time to complete
+	time.Sleep(gcCompletionDelay) // Give GC time to complete
 
 	// Measure final memory
 	var finalMemStats runtime.MemStats

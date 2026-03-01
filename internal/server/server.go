@@ -7,6 +7,8 @@ import (
 	"go-github/internal/middleware"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // Server represents the HTTP server
@@ -23,22 +25,17 @@ func New() *Server {
 	router.Use(middleware.Logger())
 	router.Use(middleware.Recovery())
 
+	// Swagger documentation
+	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Health endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
+	router.GET("/health", healthHandler)
 
 	// API v1 routes group
 	v1 := router.Group("/api/v1")
 	{
 		// Placeholder for API routes
-		v1.GET("", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"message": "API v1",
-			})
-		})
+		v1.GET("", apiRootHandler)
 	}
 
 	return &Server{router: router}
@@ -58,4 +55,32 @@ func (s *Server) Run(port string) error {
 // Router returns the gin router (useful for testing)
 func (s *Server) Router() *gin.Engine {
 	return s.router
+}
+
+// healthHandler godoc
+// @Summary Health check
+// @Description Get the health status of the API
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /health [get]
+func healthHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
+}
+
+// apiRootHandler godoc
+// @Summary API root
+// @Description Get API version information
+// @Tags api
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /api/v1 [get]
+func apiRootHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "API v1",
+	})
 }

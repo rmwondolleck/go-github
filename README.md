@@ -5,16 +5,12 @@ A RESTful API service for managing and monitoring home lab infrastructure runnin
 [![Go Version](https://img.shields.io/badge/Go-1.25-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A RESTful API service for managing and monitoring home lab infrastructure running on Kubernetes. This service provides unified access to various home automation and infrastructure services, starting with HomeAssistant integration.
-
-[![Go Version](https://img.shields.io/badge/Go-1.25-blue.svg)](https://golang.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-
 ## 📋 Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Features](#features)
+- [API Documentation](#api-documentation)
 - [API Endpoints](#api-endpoints)
 - [Development Setup](#development-setup)
 - [Building and Running](#building-and-running)
@@ -66,6 +62,7 @@ The Home Lab API Service is designed to provide a unified REST API for interacti
 │  │    - HomeAssistant endpoints                      │       │
 │  │    - Service discovery                            │       │
 │  │    - Cluster info                                 │       │
+│  │  • Swagger UI (/api/docs/*)                       │       │
 │  └───────────────────────────────────────────────────┘       │
 │                         │                                    │
 │  ┌─────────────────────┴────────────────────────────┐       │
@@ -108,6 +105,7 @@ The Home Lab API Service is designed to provide a unified REST API for interacti
 - ✅ Consistent error responses
 - ✅ CORS support preparation
 - ✅ Mocked HomeAssistant device data
+- ✅ Interactive API documentation with Swagger/OpenAPI
 
 ### Planned Features
 
@@ -119,6 +117,44 @@ The Home Lab API Service is designed to provide a unified REST API for interacti
 - 🔄 Live HomeAssistant integration
 - 🔄 Additional service integrations
 - 🔄 MCP tool wrappers
+
+## 📚 API Documentation
+
+The API is documented using OpenAPI/Swagger specification. Once the server is running, you can access:
+
+### Swagger UI
+
+**URL**: [http://localhost:8080/api/docs/index.html](http://localhost:8080/api/docs/index.html)
+
+The Swagger UI provides:
+- 📖 Interactive API documentation
+- 🧪 "Try it out" functionality to test endpoints directly in your browser
+- 📋 Full endpoint specifications with request/response schemas
+- 🔍 Parameter descriptions and validation rules
+
+### OpenAPI Specification
+
+**URL**: [http://localhost:8080/api/docs/doc.json](http://localhost:8080/api/docs/doc.json)
+
+The OpenAPI spec can be:
+- 💾 Downloaded in JSON format
+- 📤 Imported into API testing tools (Postman, Insomnia, etc.)
+- 🔗 Used for client SDK generation
+- 📝 Integrated into CI/CD pipelines
+
+### Generating Swagger Documentation
+
+After modifying API endpoints or annotations, regenerate the documentation:
+
+```bash
+# Using Make
+make swagger
+
+# Or manually
+swag init -g cmd/api/main.go -o api/
+```
+
+The generated files (`api/docs.go`, `api/swagger.json`, `api/swagger.yaml`) are gitignored as they are build artifacts.
 
 ## 🔌 API Endpoints
 
@@ -322,7 +358,11 @@ The service will start on port 8080 (or the port specified by `PORT` environment
 
 **Verify the service**:
 ```bash
+# Check health endpoint
 curl http://localhost:8080/health
+
+# Access Swagger UI in your browser
+open http://localhost:8080/api/docs/index.html
 ```
 
 ## 🧪 Testing
@@ -330,92 +370,6 @@ curl http://localhost:8080/health
 ### Run All Tests
 
 ```bash
-make test
-# Or:
-go test -v -race ./...
-```
-
-### Run Specific Package Tests
-
-```bash
-# Test server package
-go test -v ./internal/server/...
-
-# Test middleware
-go test -v ./internal/middleware/...
-
-# Test handlers
-go test -v ./internal/handlers/...
-```
-
-### Run Integration Tests
-
-```bash
-go test -v ./tests/integration/...
-```
-
-### Generate Coverage Report
-
-```bash
-go test -race -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out -o coverage.html
-# Open coverage.html in your browser
-```
-
-### Run Benchmarks
-
-```bash
-make bench
-# Or:
-go test -bench=. -benchmem ./research/...
-```
-
-## Development Tools
-
-### Hot Reload with Air
-
-For development with automatic reloading:
-
-```bash
-# Install air
-go install github.com/air-verse/air@latest
-
-# Run with hot reload
-make dev
-# Or:
-air
-```
-
-### Linting
-
-```bash
-# Install golangci-lint
-# See: https://golangci-lint.run/usage/install/
-
-# Run linter
-make lint
-# Or:
-golangci-lint run
-```
-
-### Swagger Documentation
-
-Generate and view API documentation:
-
-```bash
-# Install swag
-go install github.com/swaggo/swag/cmd/swag@latest
-
-# Generate Swagger docs
-make swagger
-# Or:
-swag init -g cmd/api/main.go -o api/
-
-# Docs will be available at:
-# http://localhost:8080/swagger/index.html (when implemented)
-```
-
-## Project Structure
 # Run tests with coverage
 make test
 
@@ -452,6 +406,15 @@ Integration tests are located in `tests/integration/`:
 go test -v ./tests/integration/...
 ```
 
+### Swagger Verification
+
+Verify Swagger UI and API documentation:
+
+```bash
+# Run verification script
+./tests/verify_swagger.sh
+```
+
 ## 📦 Deployment
 
 ### Docker Deployment
@@ -467,6 +430,13 @@ go test -v ./tests/integration/...
    ```bash
    docker run -p 8080:8080 homelab-api:latest
    ```
+
+3. **Verify deployment**:
+   ```bash
+   curl http://localhost:8080/health
+   ```
+
+For detailed deployment instructions, see [deployments/README.md](deployments/README.md).
 
 ### Kubernetes Deployment
 
@@ -500,6 +470,8 @@ The deployment includes:
 - **Liveness Probe**: `/health` endpoint checked every 10s
 - **Readiness Probe**: `/health` endpoint checked every 5s
 - **Port**: 8080 (HTTP)
+
+For complete Kubernetes deployment guide, see [deployments/README.md](deployments/README.md).
 
 ### Production Considerations
 
@@ -552,47 +524,6 @@ All logs include:
 ```
 .
 ├── cmd/
-│   └── api/              # Application entry point
-│       └── main.go
-├── internal/
-│   ├── handlers/         # HTTP request handlers
-│   ├── middleware/       # Gin middleware (logging, recovery, request ID)
-│   ├── models/          # Data models (Device, Error, Health)
-│   └── server/          # HTTP server setup and configuration
-├── tests/
-│   └── integration/     # Integration tests
-├── api/                 # Swagger API documentation
-├── deployments/         # Dockerfile and deployment configs
-├── Makefile            # Build and development commands
-├── go.mod              # Go module dependencies
-└── README.md           # This file
-```
-
-## Middleware
-
-The API includes the following middleware chain:
-
-1. **Request ID**: Generates unique IDs for each request for tracing
-2. **Logger**: Structured logging of all HTTP requests with request ID, method, path, status, and duration
-3. **Recovery**: Panic recovery with stack trace logging
-
-All requests automatically include these middleware features.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-For issues, questions, or contributions, please open an issue on GitHub.
 │   └── api/
 │       └── main.go              # Application entry point
 ├── internal/
@@ -614,11 +545,19 @@ For issues, questions, or contributions, please open an issue on GitHub.
 │       ├── server.go            # Server setup and routing
 │       └── shutdown.go          # Graceful shutdown
 ├── tests/
-│   └── integration/             # Integration tests
+│   ├── integration/             # Integration tests
+│   └── verify_swagger.sh        # Swagger UI verification
 ├── deployments/
+│   ├── Dockerfile               # Docker image definition
+│   ├── README.md                # Deployment documentation
 │   └── k8s/
-│       └── deployment.yaml      # Kubernetes deployment
+│       ├── deployment.yaml      # Kubernetes deployment
+│       ├── service.yaml         # Kubernetes service
+│       └── configmap.yaml       # Kubernetes config
 ├── api/                         # API documentation (Swagger)
+│   ├── docs.go                  # Generated Swagger docs (gitignored)
+│   ├── swagger.json             # Generated OpenAPI spec (gitignored)
+│   └── swagger.yaml             # Generated OpenAPI spec (gitignored)
 ├── research/                    # Research and benchmarks
 ├── .github/
 │   └── workflows/               # CI/CD workflows

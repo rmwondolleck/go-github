@@ -13,7 +13,10 @@ import (
 func Logger() gin.HandlerFunc {
 return func(c *gin.Context) {
 start := time.Now()
-requestID, _ := c.Get("request_id")
+requestID, exists := c.Get("request_id")
+if !exists {
+requestID = ""
+}
 
 c.Next()
 

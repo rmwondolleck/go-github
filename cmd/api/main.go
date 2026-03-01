@@ -13,16 +13,22 @@ import (
 )
 
 func main() {
+	// Get port from environment or use default
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	srv := server.New()
 
 	// Start server in a goroutine
 	go func() {
-		if err := srv.Run("8080"); err != nil && err != http.ErrServerClosed {
+		if err := srv.Run(port); err != nil && err != http.ErrServerClosed {
 			slog.Error("server error", "error", err)
 		}
 	}()
 
-	slog.Info("server started", "port", 8080)
+	slog.Info("server started", "port", port)
 
 	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)

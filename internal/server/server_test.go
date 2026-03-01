@@ -48,9 +48,9 @@ func TestGracefulShutdown(t *testing.T) {
 
 	srv := New()
 
-	// Start server in goroutine
+	// Start server in goroutine with random port
 	go func() {
-		_ = srv.Run("18080")
+		_ = srv.Run("0")
 	}()
 
 	// Give server time to start

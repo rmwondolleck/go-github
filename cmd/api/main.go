@@ -12,6 +12,20 @@ import (
 	"go-github/internal/server"
 )
 
+// @title Home Lab API Service
+// @version 1.0
+// @description API service for managing home lab devices and services
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
 func main() {
 	// Get port from environment or use default
 	port := os.Getenv("PORT")

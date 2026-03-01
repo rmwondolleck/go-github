@@ -181,7 +181,12 @@ func calculatePercentile(durations []time.Duration, percentile int) time.Duratio
 		return sorted[i] < sorted[j]
 	})
 
-	index := (len(sorted) * percentile) / 100
+	// Use nearest-rank method for percentile calculation
+	// For p99 with 100 items: (100-1) * 99 / 100 = 98 (0-indexed)
+	index := ((len(sorted) - 1) * percentile) / 100
+	if index < 0 {
+		index = 0
+	}
 	if index >= len(sorted) {
 		index = len(sorted) - 1
 	}
@@ -200,11 +205,10 @@ func logResponseStats(t *testing.T, endpoint string, durations []time.Duration) 
 	p95 := calculatePercentile(durations, 95)
 	p99 := calculatePercentile(durations, 99)
 
-	// Calculate min and max
-	var min, max time.Duration
+	// Calculate min, max, and total
+	min := durations[0]
+	max := durations[0]
 	var total time.Duration
-	min = durations[0]
-	max = durations[0]
 
 	for _, d := range durations {
 		total += d

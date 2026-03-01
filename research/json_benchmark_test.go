@@ -8,6 +8,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+// bufferSize is the initial capacity for encoding buffers.
+// 8192 bytes is sufficient for encoding 50 devices (~6.5KB typical output)
+// while avoiding excessive memory allocation.
+const bufferSize = 8192
+
 // Device represents a HomeAssistant device with all its properties
 type Device struct {
 	ID          string                 `json:"id"`
@@ -91,7 +96,7 @@ func BenchmarkJsoniter_50Devices_Compatible(b *testing.B) {
 // BenchmarkStdlib_50Devices_Stream benchmarks stdlib encoding/json using Encoder (stream API)
 func BenchmarkStdlib_50Devices_Stream(b *testing.B) {
 	devices := generateTestDevices(50)
-	buf := make([]byte, 0, 8192)
+	buf := make([]byte, 0, bufferSize)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -108,7 +113,7 @@ func BenchmarkStdlib_50Devices_Stream(b *testing.B) {
 func BenchmarkJsoniter_50Devices_Stream(b *testing.B) {
 	devices := generateTestDevices(50)
 	jsonAPI := jsoniter.ConfigFastest
-	buf := make([]byte, 0, 8192)
+	buf := make([]byte, 0, bufferSize)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

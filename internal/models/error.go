@@ -1,6 +1,6 @@
 package models
 
-// ErrorResponse represents a standardized API error response
+// ErrorResponse represents an API error response
 type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`

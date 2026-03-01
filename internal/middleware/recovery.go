@@ -14,7 +14,7 @@ func Recovery() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				requestID, _ := c.Get(RequestIDKey)
-				
+
 				slog.Error("panic recovered",
 					"request_id", requestID,
 					"error", err,

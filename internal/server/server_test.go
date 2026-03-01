@@ -53,7 +53,8 @@ func TestGracefulShutdown(t *testing.T) {
 		_ = srv.Run("0")
 	}()
 
-	// Give server time to start
+	// Brief pause to ensure httpServer is initialized
+	// (not waiting for full server startup, just for srv.httpServer to be set)
 	time.Sleep(100 * time.Millisecond)
 
 	// Test shutdown

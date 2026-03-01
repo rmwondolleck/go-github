@@ -28,7 +28,9 @@ func TestHealthEndpoint(t *testing.T) {
 	srv.Router().ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "ok")
+	assert.Contains(t, w.Body.String(), "healthy")
+	assert.Contains(t, w.Body.String(), "uptime")
+	assert.Contains(t, w.Body.String(), "components")
 }
 
 func TestAPIv1Endpoint(t *testing.T) {

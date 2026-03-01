@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"sync"
 
+	"go-github/internal/handlers"
+	"go-github/internal/health"
 	"go-github/internal/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -11,9 +13,10 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	router     *gin.Engine
-	httpServer *http.Server
-	mu         sync.RWMutex
+	router        *gin.Engine
+	httpServer    *http.Server
+	healthChecker *health.Checker
+	mu            sync.RWMutex
 }
 
 // New creates a new server instance with middleware chain
@@ -23,12 +26,11 @@ func New() *Server {
 	router.Use(middleware.Logger())
 	router.Use(middleware.Recovery())
 
+	// Initialize health checker
+	healthChecker := health.NewChecker()
+
 	// Health endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-		})
-	})
+	router.GET("/health", handlers.HealthHandler(healthChecker))
 
 	// API v1 routes group
 	v1 := router.Group("/api/v1")
@@ -41,7 +43,10 @@ func New() *Server {
 		})
 	}
 
-	return &Server{router: router}
+	return &Server{
+		router:        router,
+		healthChecker: healthChecker,
+	}
 }
 
 // Run starts the HTTP server on the specified port

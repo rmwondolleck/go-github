@@ -26,13 +26,15 @@ func generateTestDevices(count int) []Device {
 
 	for i := 0; i < count; i++ {
 		deviceType := deviceTypes[i%len(deviceTypes)]
+		deviceLetter := string(rune('a' + (i % 26)))
+		nameLetter := string(rune('A' + (i % 26)))
 		devices[i] = Device{
-			ID:    deviceType + "." + "device_" + string(rune('a'+i%26)),
-			Name:  "Test Device " + string(rune('A'+i%26)),
+			ID:    deviceType + ".device_" + deviceLetter,
+			Name:  "Test Device " + nameLetter,
 			Type:  deviceType,
 			State: states[i%len(states)],
 			Attributes: map[string]interface{}{
-				"friendly_name": "Test Device " + string(rune('A'+i%26)),
+				"friendly_name": "Test Device " + nameLetter,
 				"brightness":    128,
 				"temperature":   23.5,
 				"humidity":      65,
@@ -89,12 +91,13 @@ func BenchmarkJsoniter_50Devices_Compatible(b *testing.B) {
 // BenchmarkStdlib_50Devices_Stream benchmarks stdlib encoding/json using Encoder (stream API)
 func BenchmarkStdlib_50Devices_Stream(b *testing.B) {
 	devices := generateTestDevices(50)
+	buf := make([]byte, 0, 8192)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Simulate writing to a buffer (like an HTTP response)
-		buf := make([]byte, 0, 8192)
-		encoder := json.NewEncoder(&bytesBuffer{buf: buf})
+		buffer := &bytesBuffer{buf: buf[:0]}
+		encoder := json.NewEncoder(buffer)
 		if err := encoder.Encode(devices); err != nil {
 			b.Fatal(err)
 		}
@@ -105,11 +108,12 @@ func BenchmarkStdlib_50Devices_Stream(b *testing.B) {
 func BenchmarkJsoniter_50Devices_Stream(b *testing.B) {
 	devices := generateTestDevices(50)
 	jsonAPI := jsoniter.ConfigFastest
+	buf := make([]byte, 0, 8192)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		buf := make([]byte, 0, 8192)
-		stream := jsonAPI.BorrowStream(&bytesBuffer{buf: buf})
+		buffer := &bytesBuffer{buf: buf[:0]}
+		stream := jsonAPI.BorrowStream(buffer)
 		stream.WriteVal(devices)
 		if stream.Error != nil {
 			b.Fatal(stream.Error)

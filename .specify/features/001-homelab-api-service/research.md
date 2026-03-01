@@ -309,32 +309,21 @@ data, err := json.Marshal(devices)
 func ListDevices(c *gin.Context) {
     devices := getDevices()
     
-    // Option 1: Using Gin's JSON method (update Gin to use jsoniter)
-    c.JSON(200, devices)
-    
-    // Option 2: Manual encoding
+    // Option 1: Manual encoding with jsoniter (recommended)
     data, err := json.Marshal(devices)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
     c.Data(200, "application/json", data)
+    
+    // Option 2: Using Gin's built-in JSON (uses stdlib by default)
+    // c.JSON(200, devices)
 }
 ```
 
-### Gin Integration
-Gin can be configured to use jsoniter automatically:
-```go
-import (
-    "github.com/gin-gonic/gin"
-    jsoniter "github.com/json-iterator/go"
-)
-
-func init() {
-    // Configure Gin to use jsoniter
-    gin.DefaultWriter = jsoniter.ConfigFastest
-}
-```
+### Gin Integration Note
+Gin v1.12.0 uses the stdlib encoding/json by default. To use jsoniter, manually encode responses using `json.Marshal()` and `c.Data()` as shown in Option 1 above. Future optimization: create a custom middleware or wrapper to automatically use jsoniter for all JSON responses.
 
 ## Next Steps
 

@@ -1,4 +1,4 @@
-// +build tools
+//go:build tools
 
 package main
 
@@ -6,7 +6,7 @@ package main
 // otherwise not referenced from source code but still required for development.
 import (
 	_ "github.com/google/uuid"
-	_ "github.com/stretchr/testify"
+	_ "github.com/stretchr/testify/assert"
 	_ "github.com/swaggo/files"
 	_ "github.com/swaggo/gin-swagger"
 	_ "github.com/swaggo/swag"

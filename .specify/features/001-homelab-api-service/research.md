@@ -413,22 +413,22 @@ All goroutines accessing the same "hot" device:
 Testing lookup performance across different dataset sizes to validate algorithmic complexity:
 
 **sync.Map**:
-| Dataset Size | Time/op | Growth Factor |
-|-------------|---------|---------------|
+| Dataset Size | Time/op | Growth vs 100 devices |
+|-------------|---------|----------------------|
 | 100         | 29.60 ns | baseline |
 | 1,000       | 31.85 ns | 1.08x |
 | 10,000      | 42.41 ns | 1.43x |
 | 100,000     | 57.62 ns | 1.95x |
 
 **RWMutex**:
-| Dataset Size | Time/op | Growth Factor |
-|-------------|---------|---------------|
+| Dataset Size | Time/op | Growth vs 100 devices |
+|-------------|---------|----------------------|
 | 100         | 23.52 ns | baseline |
 | 1,000       | 27.45 ns | 1.17x |
 | 10,000      | 37.28 ns | 1.58x |
 | 100,000     | 42.70 ns | 1.82x |
 
-**Key Finding**: ✅ Both implementations demonstrate **O(1) lookup complexity**. The growth factor from 100 to 100,000 devices (1000x data increase) is only ~1.8-2x, well within O(1) bounds. Slight performance degradation is due to cache effects, not algorithmic complexity.
+**Key Finding**: ✅ Both implementations demonstrate **O(1) lookup complexity**. The growth factor from 100 to 100,000 devices (1000x data increase) is only 1.82-1.95x, well within O(1) bounds. Slight performance degradation is due to cache effects, not algorithmic complexity.
 
 ## Performance Analysis
 
@@ -792,7 +792,7 @@ Phase 0 research has successfully validated all technology choices and confirmed
 ✅ **Framework Overhead**: <10ms (achieved: negative overhead, Gin is faster)  
 ✅ **JSON Performance**: 2-3x improvement (achieved: 2.02x)  
 ✅ **Concurrent Access**: Efficient with 100 goroutines (achieved: 13ns/op)  
-✅ **O(1) Lookup**: Validated across 100-100,000 devices (achieved: 1.8-2x growth)
+✅ **O(1) Lookup**: Validated across 100-100,000 devices (achieved: 1.82-1.95x growth for 1000x data increase)
 
 ### Technology Stack Approved
 

@@ -24,7 +24,7 @@ jobs:
         run: go mod download
 
       - name: Build
-        run: go build -v ./...
+        run: go build -v -o go-github .
 
       - name: Verify build artifacts
         run: |
@@ -32,7 +32,8 @@ jobs:
             echo "Build successful: go-github binary created"
             ls -lh go-github
           else
-            echo "Warning: Binary not found, but build completed"
+            echo "Error: Binary not found after build"
+            exit 1
           fi
 
   test:

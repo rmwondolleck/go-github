@@ -28,6 +28,7 @@ func generateTestDevices(count int) []Device {
 	devices := make([]Device, count)
 	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
 	states := []string{"on", "off", "available", "unavailable"}
+	fixedTime := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
 
 	for i := 0; i < count; i++ {
 		deviceType := deviceTypes[i%len(deviceTypes)]
@@ -45,7 +46,7 @@ func generateTestDevices(count int) []Device {
 				"humidity":      65,
 				"battery":       95,
 			},
-			LastUpdated: time.Now(),
+			LastUpdated: fixedTime,
 		}
 	}
 

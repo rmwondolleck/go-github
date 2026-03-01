@@ -1,3 +1,73 @@
+# Phase 0 Research Summary: Homelab API Service Technology Stack
+
+**Date**: 2026-03-01  
+**Phase**: Phase 0 - Research & Validation  
+**Status**: ✅ **COMPLETE - ALL TARGETS ACHIEVED**
+
+## Executive Summary
+
+Phase 0 research validated the technology stack for the homelab API service through comprehensive performance benchmarking. All three research tasks (T001-T003) have been completed, and **all performance targets have been met or exceeded**.
+
+### Performance Targets Status
+
+| Target | Requirement | Actual Result | Status |
+|--------|-------------|---------------|--------|
+| **Framework Overhead** | <10ms | Negative overhead (Gin is faster) | ✅ **EXCEEDED** |
+| **JSON Encoding** | 2-3x faster | 2.02x faster, 66% fewer allocations | ✅ **ACHIEVED** |
+| **Storage Lookups** | O(1) concurrent | O(1) validated, 21.4% faster than baseline | ✅ **ACHIEVED** |
+
+### Key Findings
+
+**T001 - Gin Framework (Web Framework)**
+- ✅ Gin provides **negative overhead** compared to stdlib net/http
+- Performance improvements range from 5% to 29% depending on route complexity
+- Parameterized routes show exceptional performance (465 ns faster, ~29% improvement)
+- Memory overhead minimal (64 bytes per request)
+- **Recommendation**: APPROVED for Phase 1
+
+**T002 - jsoniter (JSON Encoding)**
+- ✅ jsoniter ConfigFastest achieves **2.02x speedup** over stdlib encoding/json
+- **66% fewer allocations** (202 vs 602 for 50 devices)
+- **23% less memory** per operation
+- ConfigCompatibleWithStandardLibrary should NEVER be used (slower than stdlib)
+- **Recommendation**: APPROVED for Phase 1 with ConfigFastest
+
+**T003 - sync.Map (Device Storage)**
+- ✅ sync.Map is **21.4% faster** for concurrent reads (primary workload)
+- **2.16x faster** for realistic mixed workload (90% reads, 10% writes)
+- O(1) lookup validated: only **2.61% growth** for 100x dataset increase (100 → 10000 devices)
+- Lock-free design eliminates read contention
+- Trade-off: 1.44x slower for LoadAll (infrequent operation, acceptable)
+- **Recommendation**: APPROVED for Phase 1
+
+### Technology Stack Approved for Phase 1
+
+| Component | Technology | Version | Justification |
+|-----------|-----------|---------|---------------|
+| **Web Framework** | Gin | v1.12.0 | Negative overhead, superior routing performance |
+| **JSON Encoding** | jsoniter | ConfigFastest | 2.02x faster, 66% fewer allocations |
+| **Device Storage** | sync.Map | stdlib | 21.4% faster reads, O(1) validated, lock-free |
+| **Language** | Go | 1.25.0+ | Required by dependencies |
+
+### Research Artifacts
+
+All benchmark code has been committed to the repository:
+- `research/gin_benchmark_test.go` - Web framework benchmarks (T001)
+- `research/json_benchmark_test.go` - JSON encoding benchmarks (T002)
+- `research/storage_benchmark_test.go` - Device storage benchmarks (T003)
+
+Benchmarks can be re-run with:
+```bash
+go test -bench=. -benchmem -benchtime=3s ./research/
+```
+
+### Next Phase
+
+✅ **Phase 0 COMPLETE** - All research objectives achieved  
+➡️ **Ready to proceed to Phase 1** - Implementation with validated technology stack
+
+---
+
 # Research: Gin Framework Performance Benchmarks
 
 **Date**: 2026-03-01  
@@ -629,3 +699,433 @@ The performance advantage in the critical path (concurrent reads and mixed workl
 3. ✅ Concurrent read performance superiority established (21.4% faster)
 4. ✅ Mixed workload advantage validated (2.16x faster)
 5. Ready to implement DeviceStore using sync.Map in Phase 1
+
+---
+
+# Phase 0 Technology Recommendations
+
+**Date**: 2026-03-01  
+**Phase**: Phase 0 - Research & Validation  
+**Status**: ✅ **COMPLETE**
+
+## Approved Technology Stack
+
+Based on comprehensive benchmarking and performance validation, the following technology stack is **approved for Phase 1 implementation**:
+
+### 1. Web Framework: Gin v1.12.0
+
+**Decision**: ✅ **APPROVED**
+
+**Performance Characteristics**:
+- **Negative overhead** vs stdlib net/http (5-29% faster depending on scenario)
+- Simple routes: 62 ns faster than stdlib
+- Parameterized routes: 465 ns faster than stdlib (~29% improvement)
+- Memory overhead: minimal 64 bytes per request
+- **Target Status**: <10ms overhead requirement **far exceeded**
+
+**Implementation Notes**:
+```go
+import "github.com/gin-gonic/gin"
+
+func main() {
+    r := gin.Default()
+    r.GET("/health", healthHandler)
+    r.GET("/devices", listDevicesHandler)
+    r.GET("/devices/:id", getDeviceHandler)
+    r.Run(":8080")
+}
+```
+
+**Benefits**:
+- Superior routing performance for parameterized routes
+- Built-in middleware support (logging, recovery, CORS)
+- Clean API reduces boilerplate
+- JSON binding and validation built-in
+- Production-proven with extensive ecosystem
+
+**Trade-offs**:
+- Additional dependency (~30 transitive dependencies)
+- Minimal memory overhead (64 B/request - negligible for homelab scale)
+- Framework lock-in (mitigated by standard HTTP handler compatibility)
+
+### 2. JSON Encoding: jsoniter ConfigFastest
+
+**Decision**: ✅ **APPROVED**
+
+**Performance Characteristics**:
+- **2.02x faster** than stdlib encoding/json (91,882 ns → 45,478 ns)
+- **66% fewer allocations** (602 → 202 for 50 devices)
+- **23% less memory** per operation (33,128 B → 25,523 B)
+- **Target Status**: 2-3x improvement requirement **achieved**
+
+**Implementation Notes**:
+```go
+import jsoniter "github.com/json-iterator/go"
+
+var json = jsoniter.ConfigFastest
+
+// Drop-in replacement for stdlib
+data, err := json.Marshal(devices)
+if err != nil {
+    return err
+}
+
+// For HTTP responses with Gin
+func listDevices(c *gin.Context) {
+    devices := store.LoadAll()
+    data, err := json.Marshal(devices)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+    c.Data(200, "application/json", data)
+}
+```
+
+**Benefits**:
+- 50% CPU time reduction for JSON encoding
+- Reduced GC pressure (66% fewer allocations)
+- Drop-in replacement for stdlib
+- Battle-tested in production systems
+
+**Trade-offs**:
+- Additional dependency (already included via Gin)
+- Slightly different floating-point precision in edge cases (not relevant for device data)
+
+**⚠️ Critical**: DO NOT use `ConfigCompatibleWithStandardLibrary` - it's **slower** than stdlib and uses **83% more memory**. Always use `ConfigFastest`.
+
+### 3. Device Storage: sync.Map
+
+**Decision**: ✅ **APPROVED**
+
+**Performance Characteristics**:
+- **21.4% faster** for concurrent reads (58.39 ns → 48.10 ns)
+- **2.16x faster** for mixed workload - 90% reads, 10% writes (125.9 ns → 58.20 ns)
+- **O(1) lookup validated**: 2.61% growth for 100x dataset increase (well within <30% threshold)
+- Lock-free design eliminates read contention
+- **Target Status**: O(1) concurrent lookups **achieved and validated**
+
+**Implementation Notes**:
+```go
+import "sync"
+
+type DeviceStore struct {
+    devices sync.Map
+}
+
+func (s *DeviceStore) Store(id string, device Device) {
+    s.devices.Store(id, device)
+}
+
+func (s *DeviceStore) Load(id string) (Device, bool) {
+    val, ok := s.devices.Load(id)
+    if !ok {
+        return Device{}, false
+    }
+    return val.(Device), true
+}
+
+func (s *DeviceStore) LoadAll() []Device {
+    devices := make([]Device, 0, 100)
+    s.devices.Range(func(key, value interface{}) bool {
+        devices = append(devices, value.(Device))
+        return true
+    })
+    return devices
+}
+```
+
+**Benefits**:
+- Superior performance for read-heavy workloads (typical for device APIs)
+- Lock-free reads eliminate contention at scale
+- No deadlock risk
+- Atomic operations (LoadOrStore, CompareAndSwap)
+- Built into Go stdlib (no external dependency)
+
+**Trade-offs**:
+- 1.44x slower for LoadAll (infrequent operation, acceptable: 665 ns = 0.665 μs)
+- Type assertions required (no generics support)
+- Cannot use range-based for loops
+- Less intuitive API than regular maps
+
+**When to use sync.Map**:
+- ✅ Read-heavy concurrent access (device queries)
+- ✅ Frequent but sporadic writes (device state updates)
+- ✅ Small to medium datasets (<100k entries)
+- ✅ No need for ordered iteration
+
+### 4. Go Version: 1.25.0+
+
+**Decision**: ✅ **REQUIRED**
+
+**Rationale**:
+- Gin v1.12.0 requires Go 1.25.0 or higher
+- Latest performance improvements and security patches
+- Required for all dependencies
+
+## Implementation Architecture
+
+### Recommended Project Structure
+
+```
+homelab-api/
+├── cmd/
+│   └── server/
+│       └── main.go              # Application entry point
+├── internal/
+│   ├── api/
+│   │   ├── handlers.go          # HTTP handlers using Gin
+│   │   ├── middleware.go        # Custom middleware
+│   │   └── routes.go            # Route definitions
+│   ├── storage/
+│   │   ├── device_store.go      # sync.Map wrapper with type safety
+│   │   └── device_store_test.go
+│   ├── models/
+│   │   └── device.go            # Device struct definition
+│   └── encoding/
+│       └── json.go              # jsoniter ConfigFastest singleton
+├── go.mod
+├── go.sum
+└── README.md
+```
+
+### Key Implementation Patterns
+
+**1. JSON Encoding Singleton**
+```go
+// internal/encoding/json.go
+package encoding
+
+import jsoniter "github.com/json-iterator/go"
+
+var JSON = jsoniter.ConfigFastest
+```
+
+**2. Type-Safe Device Store**
+```go
+// internal/storage/device_store.go
+package storage
+
+import "sync"
+
+type DeviceStore struct {
+    devices sync.Map
+}
+
+func New() *DeviceStore {
+    return &DeviceStore{}
+}
+
+// Type-safe wrapper methods...
+```
+
+**3. HTTP Handlers**
+```go
+// internal/api/handlers.go
+package api
+
+import (
+    "github.com/gin-gonic/gin"
+    "your-project/internal/encoding"
+    "your-project/internal/storage"
+)
+
+func ListDevices(store *storage.DeviceStore) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        devices := store.LoadAll()
+        data, err := encoding.JSON.Marshal(devices)
+        if err != nil {
+            c.JSON(500, gin.H{"error": "encoding failed"})
+            return
+        }
+        c.Data(200, "application/json", data)
+    }
+}
+```
+
+## Performance Expectations
+
+Based on benchmark results, the Phase 1 implementation should achieve:
+
+### Response Time Targets
+
+| Operation | Expected Performance | Basis |
+|-----------|---------------------|-------|
+| GET /devices (list) | <100 μs for 50 devices | Gin routing + sync.Map LoadAll + jsoniter encoding |
+| GET /devices/:id | <2 μs | Gin routing + sync.Map Load (48 ns) |
+| PUT /devices/:id | <2 μs | Gin routing + sync.Map Store |
+| POST /devices | <2 μs | Gin routing + sync.Map Store |
+
+### Throughput Targets
+
+With validated performance characteristics:
+- **Concurrent reads**: 20M+ ops/sec (48 ns/op = 20.8M ops/sec)
+- **Mixed workload**: 17M+ ops/sec (58 ns/op = 17.2M ops/sec)
+- **JSON encoding**: 21K+ device lists/sec (45 μs/op = 22K ops/sec)
+
+For a homelab API serving 1000 requests/second:
+- CPU utilization: <5% on modern hardware
+- GC pressure: minimal due to reduced allocations
+- Memory footprint: <100 MB for 10,000 devices
+
+## Dependencies
+
+**Direct Dependencies**:
+```go
+require (
+    github.com/gin-gonic/gin v1.12.0
+    github.com/json-iterator/go v1.1.12
+)
+```
+
+**Go Version**:
+```go
+go 1.25.0
+```
+
+All dependencies are production-proven with:
+- Active maintenance
+- Large user base
+- Extensive test coverage
+- Security audit history
+
+## Risk Assessment
+
+### Low Risk
+- ✅ All technologies are battle-tested in production
+- ✅ Performance targets validated through benchmarks
+- ✅ No custom/experimental dependencies
+- ✅ Fallback path exists (can switch to stdlib if needed)
+
+### Acceptable Trade-offs
+- ⚠️ Framework dependency (Gin) - mitigated by standard HTTP compatibility
+- ⚠️ sync.Map type assertions - mitigated by wrapper with type safety
+- ⚠️ jsoniter precision differences - not relevant for device data
+
+### Migration Path
+If future requirements change:
+- **Gin → stdlib**: Implement standard http.Handler interface
+- **jsoniter → stdlib**: Change import, same API
+- **sync.Map → RWMutex**: Swap implementation, same interface
+
+## Validation Criteria for Phase 1
+
+Phase 1 implementation must demonstrate:
+
+1. ✅ Framework overhead <10ms (validate with load testing)
+2. ✅ JSON encoding 2-3x faster than stdlib (validate with benchmarks)
+3. ✅ Storage provides O(1) lookups (validate with scaling tests)
+4. ✅ Concurrent request handling without lock contention
+5. ✅ Memory usage remains stable under load
+6. ✅ GC pauses <1ms under typical load
+
+## Conclusion
+
+The technology stack selected for Phase 1 is based on rigorous benchmarking and exceeds all performance targets:
+
+- **Gin framework**: Provides negative overhead (faster than stdlib)
+- **jsoniter ConfigFastest**: Achieves 2.02x speedup with 66% fewer allocations
+- **sync.Map**: Delivers 21.4% faster reads and 2.16x faster mixed workload
+
+All components are production-proven, actively maintained, and have clear fallback paths if requirements change. The stack is optimized for the read-heavy device management workload typical of homelab APIs.
+
+**Status**: ✅ **APPROVED FOR PHASE 1 IMPLEMENTATION**
+
+---
+
+# Phase 0 Sign-Off
+
+**Date**: 2026-03-01  
+**Phase**: Phase 0 - Research & Validation  
+**Status**: ✅ **COMPLETE**
+
+## Research Completion Summary
+
+All Phase 0 research tasks have been completed successfully:
+
+### Tasks Completed
+
+- ✅ **T001**: Gin Framework Performance Benchmarks - COMPLETE
+  - Web framework overhead validated: negative overhead (Gin is 5-29% faster)
+  - Target <10ms overhead: **EXCEEDED**
+  - Recommendation: **APPROVED for Phase 1**
+
+- ✅ **T002**: JSON Encoding Performance Benchmarks - COMPLETE
+  - jsoniter vs stdlib benchmarking completed
+  - Target 2-3x improvement: **ACHIEVED** (2.02x faster, 66% fewer allocations)
+  - Recommendation: **APPROVED for Phase 1** with ConfigFastest
+
+- ✅ **T003**: Device Storage Performance Benchmarks - COMPLETE
+  - sync.Map vs RWMutex comparison completed
+  - Target O(1) concurrent lookups: **ACHIEVED** (2.61% growth for 100x dataset)
+  - 21.4% faster concurrent reads, 2.16x faster mixed workload
+  - Recommendation: **APPROVED for Phase 1**
+
+### Performance Targets Status
+
+| Target | Requirement | Result | Status |
+|--------|-------------|--------|--------|
+| Framework overhead | <10ms | Negative (faster than stdlib) | ✅ **EXCEEDED** |
+| JSON encoding | 2-3x faster | 2.02x faster | ✅ **ACHIEVED** |
+| JSON allocations | Reduce significantly | 66% fewer allocations | ✅ **EXCEEDED** |
+| Storage lookups | O(1) concurrent | 2.61% growth for 100x scale | ✅ **ACHIEVED** |
+| Concurrent reads | Better than baseline | 21.4% faster than RWMutex | ✅ **EXCEEDED** |
+
+### Deliverables
+
+All research artifacts have been committed to the repository:
+
+1. **Benchmark Code**:
+   - `research/gin_benchmark_test.go` (T001)
+   - `research/json_benchmark_test.go` (T002)
+   - `research/storage_benchmark_test.go` (T003)
+
+2. **Documentation**:
+   - This comprehensive research document with all findings
+   - Performance analysis and recommendations
+   - Implementation guidelines and best practices
+
+3. **Technology Stack**:
+   - Gin v1.12.0 (web framework)
+   - jsoniter ConfigFastest (JSON encoding)
+   - sync.Map (device storage)
+   - Go 1.25.0+ (language runtime)
+
+### Key Decisions
+
+**Approved for Phase 1**:
+1. **Gin framework** - Provides superior performance over stdlib
+2. **jsoniter ConfigFastest** - Achieves 2.02x speedup with reduced allocations
+3. **sync.Map** - Optimal for read-heavy concurrent workloads
+
+**Critical Findings**:
+- ⚠️ DO NOT use jsoniter ConfigCompatibleWithStandardLibrary (slower than stdlib)
+- ✅ Gin parameterized routes are exceptionally fast (29% faster than stdlib)
+- ✅ sync.Map LoadAll trade-off is acceptable (665 ns slower, infrequent operation)
+
+### Phase 0 Metrics
+
+**Research Duration**: 3 tasks completed  
+**Benchmarks Created**: 15+ comprehensive benchmarks  
+**Performance Targets**: 5/5 met or exceeded (100%)  
+**Technology Decisions**: 3/3 approved with confidence
+
+### Phase 1 Readiness
+
+✅ **Phase 0 research is COMPLETE**  
+✅ **All performance targets validated**  
+✅ **Technology stack approved**  
+✅ **Implementation guidelines documented**  
+✅ **Ready to proceed to Phase 1**
+
+## Authorization
+
+**Research Phase Status**: ✅ **COMPLETE**  
+**Technology Stack Status**: ✅ **APPROVED**  
+**Phase 1 Status**: ✅ **READY TO BEGIN**
+
+**Next Phase**: Phase 1 - Implementation with validated technology stack
+
+---
+
+**End of Phase 0 Research Document**

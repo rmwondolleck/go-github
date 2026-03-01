@@ -18,6 +18,8 @@ import (
 const (
 	// Number of concurrent requests for tests and benchmarks
 	concurrentRequests = 100
+	// Number of batches for memory leak detection test
+	memoryLeakTestBatches = 5
 	// Pause duration between batches in memory leak test
 	batchPauseDuration = 10 * time.Millisecond
 	// Wait time for GC completion
@@ -132,12 +134,9 @@ func TestMemoryLeakDetection(t *testing.T) {
 	initialAlloc := initialMemStats.Alloc
 
 	// Act - Send multiple batches of concurrent requests
-	batches := 5
-	requestsPerBatch := 100
-
-	for batch := 0; batch < batches; batch++ {
+	for batch := 0; batch < memoryLeakTestBatches; batch++ {
 		var wg sync.WaitGroup
-		for i := 0; i < requestsPerBatch; i++ {
+		for i := 0; i < concurrentRequests; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -165,10 +164,12 @@ func TestMemoryLeakDetection(t *testing.T) {
 	memoryGrowth := int64(finalAlloc - initialAlloc)
 	memoryGrowthMB := float64(memoryGrowth) / 1024 / 1024
 
+	totalRequests := memoryLeakTestBatches * concurrentRequests
+
 	t.Logf("Memory stats: Initial: %d bytes, Final: %d bytes, Growth: %.2f MB",
 		initialAlloc, finalAlloc, memoryGrowthMB)
 	t.Logf("Total requests: %d, Memory per request: %.2f bytes",
-		batches*requestsPerBatch, float64(memoryGrowth)/float64(batches*requestsPerBatch))
+		totalRequests, float64(memoryGrowth)/float64(totalRequests))
 
 	// Assert that memory growth is reasonable (less than 10 MB for 500 requests)
 	// This is a reasonable threshold for detecting significant memory leaks

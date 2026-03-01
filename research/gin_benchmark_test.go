@@ -91,12 +91,12 @@ func BenchmarkStdlibWithMiddleware(b *testing.B) {
 func BenchmarkGinWithMiddleware(b *testing.B) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	
+
 	// Simple middleware
 	router.Use(func(c *gin.Context) {
 		c.Next()
 	})
-	
+
 	router.GET("/health", ginHealthHandler)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)

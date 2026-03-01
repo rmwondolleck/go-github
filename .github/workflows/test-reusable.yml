@@ -7,7 +7,7 @@ on:
         description: 'Go version to use for testing'
         required: false
         type: string
-        default: '1.24'
+        default: '1.25'
 
 jobs:
   test:
@@ -28,6 +28,8 @@ jobs:
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
+        env:
+          GOTOOLCHAIN: go1.25.0+auto
 
       - name: Display coverage
         run: go tool cover -func=coverage.out

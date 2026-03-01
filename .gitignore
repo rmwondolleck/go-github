@@ -10,6 +10,7 @@
 
 # Project binary
 go-github
+bin/
 
 # Test binary, built with `go test -c`
 *.test
@@ -19,6 +20,11 @@ go-github
 coverage.*
 *.coverprofile
 profile.cov
+
+# Generated API documentation
+api/docs.go
+api/swagger.json
+api/swagger.yaml
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

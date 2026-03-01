@@ -21,6 +21,11 @@ coverage.*
 *.coverprofile
 profile.cov
 
+# Generated API documentation
+api/docs.go
+api/swagger.json
+api/swagger.yaml
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

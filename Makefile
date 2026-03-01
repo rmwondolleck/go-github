@@ -1,7 +1,8 @@
-.PHONY: help build test run clean lint swagger docker bench dev
-
 # Default target: show help
 .DEFAULT_GOAL := help
+
+# Phony targets (targets that don't create files)
+.PHONY: help build test run clean lint swagger docker bench dev
 
 # Display help information
 help:
@@ -20,6 +21,7 @@ help:
 
 # Build the application
 build:
+	mkdir -p bin/
 	go build -o bin/homelab-api ./cmd/api
 
 # Run tests with coverage
@@ -33,7 +35,7 @@ run:
 
 # Clean build artifacts
 clean:
-	rm -rf bin/ coverage.out coverage.html
+	rm -rf bin/ coverage.out coverage.html api/docs.go api/swagger.json api/swagger.yaml
 
 # Run linter
 lint:

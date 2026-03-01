@@ -10,6 +10,7 @@
 
 # Project binary
 go-github
+bin/
 
 # Test binary, built with `go test -c`
 *.test

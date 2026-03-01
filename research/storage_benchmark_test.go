@@ -87,6 +87,7 @@ func setupStorage(storage DeviceStorage, count int) {
 func BenchmarkSyncMap_ConcurrentReads(b *testing.B) {
 	storage := &SyncMapStorage{}
 	setupStorage(storage, 50)
+	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
 	
 	b.ResetTimer()
 	// RunParallel automatically uses GOMAXPROCS goroutines
@@ -94,8 +95,10 @@ func BenchmarkSyncMap_ConcurrentReads(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
 		for pb.Next() {
-			// Cycle through device IDs
-			deviceID := fmt.Sprintf("light.device_%c", 'a'+(i%26))
+			// Cycle through all 50 device IDs
+			deviceType := deviceTypes[i%len(deviceTypes)]
+			deviceLetter := string(rune('a' + (i % 26)))
+			deviceID := deviceType + ".device_" + deviceLetter
 			storage.Load(deviceID)
 			i++
 		}
@@ -107,6 +110,7 @@ func BenchmarkSyncMap_ConcurrentReads(b *testing.B) {
 func BenchmarkRWMutex_ConcurrentReads(b *testing.B) {
 	storage := NewRWMutexStorage()
 	setupStorage(storage, 50)
+	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
 	
 	b.ResetTimer()
 	// RunParallel automatically uses GOMAXPROCS goroutines
@@ -114,8 +118,10 @@ func BenchmarkRWMutex_ConcurrentReads(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
 		for pb.Next() {
-			// Cycle through device IDs
-			deviceID := fmt.Sprintf("light.device_%c", 'a'+(i%26))
+			// Cycle through all 50 device IDs
+			deviceType := deviceTypes[i%len(deviceTypes)]
+			deviceLetter := string(rune('a' + (i % 26)))
+			deviceID := deviceType + ".device_" + deviceLetter
 			storage.Load(deviceID)
 			i++
 		}
@@ -128,6 +134,7 @@ func BenchmarkSyncMap_MixedWorkload(b *testing.B) {
 	storage := &SyncMapStorage{}
 	setupStorage(storage, 50)
 	devices := generateTestDevices(50)
+	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
 	
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -139,8 +146,10 @@ func BenchmarkSyncMap_MixedWorkload(b *testing.B) {
 				device := devices[i%len(devices)]
 				storage.Store(device.ID, device)
 			} else {
-				// Read operation
-				deviceID := fmt.Sprintf("light.device_%c", 'a'+(i%26))
+				// Read operation - cycle through all 50 device IDs
+				deviceType := deviceTypes[i%len(deviceTypes)]
+				deviceLetter := string(rune('a' + (i % 26)))
+				deviceID := deviceType + ".device_" + deviceLetter
 				storage.Load(deviceID)
 			}
 			i++
@@ -154,6 +163,7 @@ func BenchmarkRWMutex_MixedWorkload(b *testing.B) {
 	storage := NewRWMutexStorage()
 	setupStorage(storage, 50)
 	devices := generateTestDevices(50)
+	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
 	
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -165,8 +175,10 @@ func BenchmarkRWMutex_MixedWorkload(b *testing.B) {
 				device := devices[i%len(devices)]
 				storage.Store(device.ID, device)
 			} else {
-				// Read operation
-				deviceID := fmt.Sprintf("light.device_%c", 'a'+(i%26))
+				// Read operation - cycle through all 50 device IDs
+				deviceType := deviceTypes[i%len(deviceTypes)]
+				deviceLetter := string(rune('a' + (i % 26)))
+				deviceID := deviceType + ".device_" + deviceLetter
 				storage.Load(deviceID)
 			}
 			i++

@@ -2,6 +2,7 @@ package research
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 
@@ -23,8 +24,8 @@ func generateDevices(n int) []Device {
 	devices := make([]Device, n)
 	for i := 0; i < n; i++ {
 		devices[i] = Device{
-			ID:    "device_" + string(rune(i)),
-			Name:  "Device " + string(rune(i)),
+			ID:    "device_" + strconv.Itoa(i),
+			Name:  "Device " + strconv.Itoa(i),
 			Type:  "sensor",
 			State: "on",
 			Attributes: map[string]string{

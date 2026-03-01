@@ -13,12 +13,8 @@ type Command struct {
 
 // Validate checks if the Command has valid data
 func (c *Command) Validate() error {
-	if c.Action == "" {
-		return errors.New("action is required")
-	}
-
 	if strings.TrimSpace(c.Action) == "" {
-		return errors.New("action cannot be empty or whitespace")
+		return errors.New("action is required")
 	}
 
 	if c.Parameters == nil {

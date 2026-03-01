@@ -11,7 +11,7 @@ help:
 	@echo "  make build   - Build the application binary to bin/homelab-api"
 	@echo "  make test    - Run tests with race detection and coverage report"
 	@echo "  make run     - Run the application"
-	@echo "  make clean   - Clean build artifacts (bin/, coverage files)"
+	@echo "  make clean   - Clean build artifacts (bin/, coverage, Swagger docs)"
 	@echo "  make lint    - Run golangci-lint code linter"
 	@echo "  make swagger - Generate Swagger API documentation"
 	@echo "  make docker  - Build Docker image (homelab-api:latest)"

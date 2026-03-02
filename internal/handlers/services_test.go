@@ -5,6 +5,7 @@ import (
 	"go-github/internal/models"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -194,12 +195,10 @@ func TestListServicesHandler_ServiceFields(t *testing.T) {
 			}
 
 			// Validate endpoint format (should start with http:// or https://)
-			if len(service.Endpoint) >= 4 {
-				if service.Endpoint[:4] != "http" {
-					t.Errorf("service '%s' endpoint '%s' does not start with http", service.Name, service.Endpoint)
+			if service.Endpoint != "" {
+				if !strings.HasPrefix(service.Endpoint, "http://") && !strings.HasPrefix(service.Endpoint, "https://") {
+					t.Errorf("service '%s' endpoint '%s' does not start with http:// or https://", service.Name, service.Endpoint)
 				}
-			} else if len(service.Endpoint) > 0 {
-				t.Errorf("service '%s' endpoint '%s' is too short to be a valid URL", service.Name, service.Endpoint)
 			}
 		})
 	}

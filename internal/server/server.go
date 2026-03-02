@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"go-github/internal/handlers"
 	"go-github/internal/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -36,6 +37,7 @@ func New() *Server {
 	{
 		// Placeholder for API routes
 		v1.GET("", apiRootHandler)
+		v1.GET("/services", handlers.ListServicesHandler)
 	}
 
 	return &Server{router: router}

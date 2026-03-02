@@ -218,7 +218,7 @@ func BenchmarkStdlibJSON(b *testing.B) {
 }
 
 // BenchmarkJsoniter benchmarks jsoniter.Marshal with realistic API response payload
-// This benchmark demonstrates the 2-3x performance improvement achieved by using
+// This benchmark demonstrates the 1.5-2x performance improvement achieved by using
 // jsoniter.ConfigFastest instead of the standard library encoding/json.
 // The payload is identical to BenchmarkStdlibJSON for fair comparison.
 func BenchmarkJsoniter(b *testing.B) {

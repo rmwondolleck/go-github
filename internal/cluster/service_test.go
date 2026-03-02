@@ -4,6 +4,23 @@ import (
 	"testing"
 )
 
+// TDD: This test file is written BEFORE implementation following Test-Driven Development methodology.
+// These tests will FAIL until the cluster service implementation is completed in a future task.
+//
+// Expected implementation requirements:
+// - NewService() function that returns a Service with ListServices method
+// - Service.ListServices(filter string) ([]ServiceInfo, error) method
+// - Mock data: api-service, database-service, cache-service
+// - Filter logic: case-insensitive substring matching on service names
+// - Whitespace-trimmed filters; empty filter returns all services
+//
+// Test coverage:
+// - TestListServices_ReturnsMockedServices: Validates basic service listing
+// - TestListServices_FiltersByName: Tests filtering with 7 scenarios
+// - TestListServices_EdgeCases: Validates data integrity and constraints
+// - TestNewService: Constructor validation
+// - TestServiceInfo_Structure: Structure validation
+
 // TestListServices_ReturnsMockedServices tests that the service returns mocked cluster services
 func TestListServices_ReturnsMockedServices(t *testing.T) {
 	tests := []struct {

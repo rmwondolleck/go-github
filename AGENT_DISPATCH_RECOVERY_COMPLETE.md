@@ -77,10 +77,10 @@ Once new agents create fresh PRs, close the stale WIP PRs:
 
 You'll know recovery is complete when:
 - ✅ 3 completed PRs merged (#111, #113, #115)
-- ✅ 7 new PRs created by agents
-- ✅ All 10 stale WIP PRs closed
+- ✅ 11 new PRs created by agents
+- ✅ All 12 stale WIP PRs closed
 - ✅ All tests passing on main branch
-- ✅ Issues #35, #38, #39, #40, #58, #60, #61 resolved
+- ✅ Issues #35, #38, #39, #40, #42, #43, #48, #49, #58, #60, #61 resolved
 
 ---
 

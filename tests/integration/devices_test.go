@@ -89,7 +89,7 @@ func TestExecuteCommand_Returns400ForInvalidAction(t *testing.T) {
 			command: map[string]interface{}{
 				"action": "turn_on",
 			},
-			reason: "parameters is required",
+			reason: "parameters field is required (can be empty map, but not nil)",
 		},
 	}
 	

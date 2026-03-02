@@ -482,8 +482,8 @@ func TestExecuteCommand_ConcurrentExecution(t *testing.T) {
 	store := newMockDeviceStore()
 	service := newMockService(store)
 
-	// Run multiple commands concurrently to test thread safety
-	done := make(chan bool, 10)
+	// Channel to collect errors from goroutines
+	errChan := make(chan error, 10)
 
 	for i := 0; i < 10; i++ {
 		go func() {
@@ -492,16 +492,16 @@ func TestExecuteCommand_ConcurrentExecution(t *testing.T) {
 				Parameters: map[string]interface{}{"entity_id": "light.living_room"},
 			}
 			err := service.ExecuteCommand("light.living_room", cmd)
-			if err != nil {
-				t.Errorf("ExecuteCommand() in goroutine failed: %v", err)
-			}
-			done <- true
+			errChan <- err
 		}()
 	}
 
-	// Wait for all goroutines to complete
+	// Collect results from all goroutines
 	for i := 0; i < 10; i++ {
-		<-done
+		err := <-errChan
+		if err != nil {
+			t.Errorf("ExecuteCommand() in goroutine %d failed: %v", i, err)
+		}
 	}
 }
 

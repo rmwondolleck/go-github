@@ -19,6 +19,9 @@ spec:
       containers:
       - name: homelab-api
         image: homelab-api:latest
+        envFrom:
+        - configMapRef:
+            name: homelab-api-config
         ports:
         - containerPort: 8080
           name: http

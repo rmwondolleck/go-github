@@ -1,0 +1,53 @@
+# Stage 1 - Builder
+FROM golang:1.25-alpine AS builder
+
+# Set working directory
+WORKDIR /build
+
+# Copy go mod files first for better caching
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy all source code
+COPY . .
+
+# Build the binary with optimizations for size and static linking
+# - CGO_ENABLED=0: Disable CGO for static binary
+# - GOOS=linux: Target Linux OS
+# - -a: Force rebuilding of packages
+# - -installsuffix cgo: Add suffix to package directory
+# - -ldflags '-w -s': Strip debug info and symbol table
+# - -trimpath: Remove file system paths from binary
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -a \
+    -installsuffix cgo \
+    -ldflags '-w -s -extldflags "-static"' \
+    -trimpath \
+    -o homelab-api \
+    ./cmd/api
+
+# Stage 2 - Runtime
+# Using gcr.io/distroless/static-debian12 for security and small size
+# This image includes ca-certificates and runs as non-root by default
+FROM gcr.io/distroless/static-debian12:nonroot
+
+# Copy binary from builder stage
+COPY --from=builder /build/homelab-api /homelab-api
+
+# Expose port
+EXPOSE 8080
+
+# Set environment variable defaults
+ENV PORT=8080
+
+# The distroless nonroot image runs as user 65532:65532 by default
+# No need to specify USER as it's already non-root
+
+# Health checks with distroless can be done externally (e.g., Kubernetes liveness/readiness probes)
+# Docker HEALTHCHECK is not supported with distroless as there's no shell
+# In production environments, use orchestrator health probes instead
+
+# Run the application
+CMD ["/homelab-api"]

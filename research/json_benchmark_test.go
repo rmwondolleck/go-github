@@ -157,12 +157,10 @@ func (b *bytesBuffer) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-// BenchmarkStdlibJSON benchmarks standard library json.Marshal with realistic API response payload
-// This benchmark uses the actual ErrorResponse and Device models from the application
-// to provide realistic performance measurements for typical API responses.
-func BenchmarkStdlibJSON(b *testing.B) {
-	// Create a realistic API response payload
-	payload := struct {
+// generateTestAPIResponse creates a realistic API response payload for benchmarking
+// This ensures both BenchmarkStdlibJSON and BenchmarkJsoniter use identical data
+func generateTestAPIResponse() interface{} {
+	return struct {
 		Error   *models.ErrorResponse `json:"error,omitempty"`
 		Devices []models.Device       `json:"devices"`
 	}{
@@ -174,9 +172,9 @@ func BenchmarkStdlibJSON(b *testing.B) {
 				Type:  "light",
 				State: "on",
 				Attributes: map[string]interface{}{
-					"brightness":    200,
-					"friendly_name": "Living Room Light",
-					"supported_features": 1,
+					"brightness":           200,
+					"friendly_name":        "Living Room Light",
+					"supported_features":   1,
 				},
 				LastUpdated:  time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC),
 				Controllable: true,
@@ -207,6 +205,13 @@ func BenchmarkStdlibJSON(b *testing.B) {
 			},
 		},
 	}
+}
+
+// BenchmarkStdlibJSON benchmarks standard library json.Marshal with realistic API response payload
+// This benchmark uses the actual ErrorResponse and Device models from the application
+// to provide realistic performance measurements for typical API responses.
+func BenchmarkStdlibJSON(b *testing.B) {
+	payload := generateTestAPIResponse()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -223,53 +228,7 @@ func BenchmarkStdlibJSON(b *testing.B) {
 // The payload is identical to BenchmarkStdlibJSON for fair comparison.
 func BenchmarkJsoniter(b *testing.B) {
 	jsonAPI := jsoniter.ConfigFastest
-
-	// Create a realistic API response payload (identical to BenchmarkStdlibJSON)
-	payload := struct {
-		Error   *models.ErrorResponse `json:"error,omitempty"`
-		Devices []models.Device       `json:"devices"`
-	}{
-		Error: nil,
-		Devices: []models.Device{
-			{
-				ID:    "light.living_room",
-				Name:  "Living Room Light",
-				Type:  "light",
-				State: "on",
-				Attributes: map[string]interface{}{
-					"brightness":    200,
-					"friendly_name": "Living Room Light",
-					"supported_features": 1,
-				},
-				LastUpdated:  time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC),
-				Controllable: true,
-			},
-			{
-				ID:    "sensor.temperature",
-				Name:  "Temperature Sensor",
-				Type:  "sensor",
-				State: "23.5",
-				Attributes: map[string]interface{}{
-					"unit_of_measurement": "°C",
-					"friendly_name":       "Temperature Sensor",
-					"device_class":        "temperature",
-				},
-				LastUpdated:  time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC),
-				Controllable: false,
-			},
-			{
-				ID:    "switch.bedroom",
-				Name:  "Bedroom Switch",
-				Type:  "switch",
-				State: "off",
-				Attributes: map[string]interface{}{
-					"friendly_name": "Bedroom Switch",
-				},
-				LastUpdated:  time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC),
-				Controllable: true,
-			},
-		},
-	}
+	payload := generateTestAPIResponse()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

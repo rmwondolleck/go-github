@@ -87,13 +87,24 @@ func (m *mockDeviceStore) GetDevice(id string) (*models.Device, error) {
 }
 
 // Service represents the HomeAssistant service interface
-// This is a placeholder for the actual implementation
+// 
+// NOTE: This interface is intentionally defined in the test file as part of TDD methodology.
+// Following Test-Driven Development, tests are written FIRST before implementation.
+// When the real service.go file is created, this interface should be moved there,
+// and the mockService below will be replaced by the real implementation.
+// The tests will then verify that the real implementation meets the specification.
 type Service interface {
 	ExecuteCommand(deviceID string, command *Command) error
 }
 
 // mockService is a mock implementation for testing
-// This simulates the expected behavior of the real service
+// This simulates the expected behavior of the real service.
+// It demonstrates what the real implementation should do:
+// 1. Validate the command
+// 2. Check if device exists
+// 3. Verify device is controllable
+// 4. Validate action is supported for device type
+// 5. Execute the command
 type mockService struct {
 	store *mockDeviceStore
 }

@@ -35,12 +35,12 @@ func CORS() gin.HandlerFunc {
 			c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			c.Header("Access-Control-Allow-Credentials", "true")
-		}
 
-		// Handle preflight OPTIONS requests
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
+			// Handle preflight OPTIONS requests for allowed origins
+			if c.Request.Method == "OPTIONS" {
+				c.AbortWithStatus(204)
+				return
+			}
 		}
 
 		c.Next()

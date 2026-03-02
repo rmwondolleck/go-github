@@ -147,32 +147,36 @@ func TestCORS_PreflightRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	tests := []struct {
-		name          string
-		corsOrigins   string
-		requestOrigin string
-		expectCORS    bool
-		wantOrigin    string
+		name           string
+		corsOrigins    string
+		requestOrigin  string
+		expectCORS     bool
+		wantOrigin     string
+		expectedStatus int
 	}{
 		{
-			name:          "preflight with allowed origin",
-			corsOrigins:   "https://example.com",
-			requestOrigin: "https://example.com",
-			expectCORS:    true,
-			wantOrigin:    "https://example.com",
+			name:           "preflight with allowed origin",
+			corsOrigins:    "https://example.com",
+			requestOrigin:  "https://example.com",
+			expectCORS:     true,
+			wantOrigin:     "https://example.com",
+			expectedStatus: 204,
 		},
 		{
-			name:          "preflight with forbidden origin",
-			corsOrigins:   "https://example.com",
-			requestOrigin: "https://evil.com",
-			expectCORS:    false,
-			wantOrigin:    "",
+			name:           "preflight with forbidden origin",
+			corsOrigins:    "https://example.com",
+			requestOrigin:  "https://evil.com",
+			expectCORS:     false,
+			wantOrigin:     "",
+			expectedStatus: 404, // No route handler for OPTIONS, returns 404
 		},
 		{
-			name:          "preflight with default origin",
-			corsOrigins:   "",
-			requestOrigin: "http://localhost:3000",
-			expectCORS:    true,
-			wantOrigin:    "http://localhost:3000",
+			name:           "preflight with default origin",
+			corsOrigins:    "",
+			requestOrigin:  "http://localhost:3000",
+			expectCORS:     true,
+			wantOrigin:     "http://localhost:3000",
+			expectedStatus: 204,
 		},
 	}
 
@@ -203,8 +207,8 @@ func TestCORS_PreflightRequest(t *testing.T) {
 			// Serve the request
 			router.ServeHTTP(w, req)
 
-			// Verify response code (preflight should return 204)
-			assert.Equal(t, 204, w.Code)
+			// Verify response code
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
 			// Verify CORS headers
 			if tt.expectCORS {
@@ -212,12 +216,11 @@ func TestCORS_PreflightRequest(t *testing.T) {
 				assert.Equal(t, "GET, POST, OPTIONS", w.Header().Get("Access-Control-Allow-Methods"))
 				assert.Equal(t, "Content-Type, Authorization", w.Header().Get("Access-Control-Allow-Headers"))
 				assert.Equal(t, "true", w.Header().Get("Access-Control-Allow-Credentials"))
+				// Verify response body is empty for allowed preflight
+				assert.Empty(t, w.Body.String())
 			} else {
 				assert.Empty(t, w.Header().Get("Access-Control-Allow-Origin"))
 			}
-
-			// Verify response body is empty for OPTIONS
-			assert.Empty(t, w.Body.String())
 		})
 	}
 }
@@ -264,7 +267,7 @@ func TestCORS_PreflightDoesNotCallNext(t *testing.T) {
 		c.Status(http.StatusOK)
 	})
 
-	// Create preflight OPTIONS request
+	// Create preflight OPTIONS request with allowed origin
 	req := httptest.NewRequest("OPTIONS", "/test", nil)
 	req.Header.Set("Origin", "https://example.com")
 	w := httptest.NewRecorder()
@@ -272,9 +275,37 @@ func TestCORS_PreflightDoesNotCallNext(t *testing.T) {
 	// Serve the request
 	router.ServeHTTP(w, req)
 
-	// Verify handler was NOT called (preflight should abort)
-	assert.False(t, handlerCalled, "CORS middleware should abort for OPTIONS requests")
+	// Verify handler was NOT called (preflight with allowed origin should abort)
+	assert.False(t, handlerCalled, "CORS middleware should abort for OPTIONS requests from allowed origins")
 	assert.Equal(t, 204, w.Code)
+}
+
+func TestCORS_PreflightForbiddenOriginCallsNext(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	os.Setenv("CORS_ORIGINS", "https://example.com")
+	defer os.Unsetenv("CORS_ORIGINS")
+
+	router := gin.New()
+	router.Use(CORS())
+
+	handlerCalled := false
+	router.OPTIONS("/test", func(c *gin.Context) {
+		handlerCalled = true
+		c.Status(http.StatusOK)
+	})
+
+	// Create preflight OPTIONS request with forbidden origin
+	req := httptest.NewRequest("OPTIONS", "/test", nil)
+	req.Header.Set("Origin", "https://evil.com")
+	w := httptest.NewRecorder()
+
+	// Serve the request
+	router.ServeHTTP(w, req)
+
+	// Verify handler WAS called (preflight with forbidden origin should continue to handler)
+	assert.True(t, handlerCalled, "CORS middleware should call c.Next() for OPTIONS requests from forbidden origins")
+	assert.Equal(t, 200, w.Code)
 }
 
 func TestParseOrigins(t *testing.T) {

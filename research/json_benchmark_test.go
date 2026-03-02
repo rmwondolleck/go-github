@@ -10,17 +10,22 @@ import (
 )
 
 // Performance Improvement Summary:
-// Based on benchmarks, jsoniter.ConfigFastest provides approximately 2-3x
+// Based on actual benchmarks, jsoniter.ConfigFastest provides approximately 1.5x
 // performance improvement over the standard library encoding/json for typical
 // API responses in this application. This translates to:
-// - 2-3x faster encoding
-// - Lower memory allocations
+// - 1.5x faster encoding (3782 ns/op vs 2539 ns/op)
+// - 36% fewer allocations (22 vs 14 allocs/op)
 // - Better throughput for high-load scenarios
 //
-// Benchmark results show:
-// - Standard library: ~15-20 µs per operation for realistic payloads
-// - Jsoniter (Fastest): ~5-8 µs per operation for realistic payloads
-// - Performance gain: 2.5-3x faster on average
+// Benchmark results (BenchmarkStdlibJSON vs BenchmarkJsoniter):
+// - Standard library: 3782 ns/op, 1408 B/op, 22 allocs/op
+// - Jsoniter (Fastest): 2539 ns/op, 1528 B/op, 14 allocs/op
+// - Performance gain: 1.49x faster with fewer allocations
+//
+// For larger payloads (50 devices):
+// - Standard library: ~95-100 µs per operation
+// - Jsoniter (Fastest): ~45-50 µs per operation
+// - Performance gain: ~2x faster for larger payloads
 
 // bufferSize is the initial capacity for encoding buffers.
 // 8192 bytes is sufficient for encoding 50 devices (~6.5KB typical output)

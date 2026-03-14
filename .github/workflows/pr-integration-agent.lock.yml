@@ -3,7 +3,7 @@
 # Remove the .lock suffix to enable the workflow.
 #
 # To enable: rename to pr-integration-agent.yml
-# To use: trigger manually via workflow_dispatch or label an issue with 'epic-integration'
+# To use: trigger manually via workflow_dispatch, label an issue with 'epic-integration', or label a PR with 'epic-integration'
 #
 # Safety: This agent creates branches and PRs. It should only be enabled
 # when you are ready to consolidate open PRs into an epic branch.

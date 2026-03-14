@@ -113,10 +113,14 @@ Create a detailed integration plan as a comment on the triggering issue (or as a
 
 ```mermaid
 graph TD
-    PR_111[PR #111: Health Tests] --> PR_113[PR #113: Health Handler]
-    PR_113 --> PR_141[PR #141: Services Endpoint]
-    PR_141 --> PR_142[PR #142: CORS Middleware]
-    ...
+    PR_A[PR #A: Core Models] --> PR_B[PR #B: Service Layer]
+    PR_A --> PR_C[PR #C: Middleware]
+    PR_B --> PR_D[PR #D: Handlers]
+    PR_C --> PR_D
+    PR_D --> PR_E[PR #E: Unit Tests]
+    PR_D --> PR_F[PR #F: Integration Tests]
+    PR_D --> PR_G[PR #G: Swagger Docs]
+    PR_H[PR #H: Dockerfile] -.->|no code dependency| PR_D
 ```
 
 #### Predicted Conflicts
@@ -264,7 +268,7 @@ When integrating Go source files from multiple PRs:
 2. **Package declarations**: Must match - flag error if they don't
 3. **Init functions**: Combine if multiple PRs add init() functions
 4. **Route registration**: Merge route registrations in server setup
-5. **Middleware chain**: Preserve middleware ordering (recovery → logging → requestID → CORS → routes)
+5. **Middleware chain**: Preserve the project's middleware ordering as defined in the server setup (verify by reading the existing router configuration)
 6. **Handler functions**: Add all handler functions, ensure no naming conflicts
 7. **Models/Types**: Merge type definitions, check for field conflicts
 8. **Interfaces**: Combine interface methods from different PRs

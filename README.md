@@ -4,6 +4,8 @@ A RESTful API service for managing and monitoring home lab infrastructure runnin
 
 [![Go Version](https://img.shields.io/badge/Go-1.25-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Constitution Compliance](https://img.shields.io/badge/compliance-passing-brightgreen.svg)](COMPLIANCE_REPORT.md)
+[![Test Coverage](https://img.shields.io/badge/coverage-93.5%25-brightgreen.svg)](COMPLIANCE_REPORT.md)
 
 ## 🚀 Current Status (March 2, 2026)
 
@@ -22,6 +24,20 @@ A RESTful API service for managing and monitoring home lab infrastructure runnin
 - **Next Milestone**: Phase 2 (US1 - Device Management MVP)
 
 See [`MISSION_COMPLETE.md`](./MISSION_COMPLETE.md) for full status and [`AGENT_MONITORING_DASHBOARD.md`](./AGENT_MONITORING_DASHBOARD.md) to track active agents.
+
+## ✅ Constitution Compliance
+
+All project requirements have been validated. See [COMPLIANCE_REPORT.md](./COMPLIANCE_REPORT.md) for full details.
+
+| Requirement | Status |
+|-------------|--------|
+| Go 1.24+ standards | ✅ Go 1.25 |
+| 80%+ test coverage | ✅ 93.5% |
+| All errors handled | ✅ Structured error responses |
+| Structured logging | ✅ `log/slog` used throughout |
+| Graceful shutdown | ✅ OS signal handling with 5s timeout |
+| Code formatting | ✅ `gofmt` clean |
+| Lints passing | ✅ `go vet` clean |
 
 ## 📋 Table of Contents
 

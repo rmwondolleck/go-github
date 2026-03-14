@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homelab-api-config
+  labels:
+    app: homelab-api
+data:
+  # LOG_LEVEL controls the verbosity of application logging
+  # Options: debug, info, warn, error
+  # Default: info
+  # Use "debug" for development and troubleshooting, "info" for production
+  LOG_LEVEL: "info"
+  
+  # RATE_LIMIT sets the maximum number of requests per minute per IP address
+  # This helps prevent abuse and ensures fair resource allocation
+  # Default: 100
+  # Increase for high-traffic environments or trusted networks
+  RATE_LIMIT: "500"
+  
+  # CORS_ORIGINS specifies allowed origins for Cross-Origin Resource Sharing
+  # Comma-separated list of URLs that can make requests to this API
+  # Default: *
+  # Examples: http://localhost:3000,https://example.com
+  CORS_ORIGINS: "http://localhost:3000,http://localhost:8080"
+  
+  # SERVER_PORT defines the HTTP port the server listens on
+  # This should match the containerPort in the deployment spec
+  # Default: 8080
+  # Note: In Kubernetes, this is internal to the pod; external access is via Service
+  SERVER_PORT: "8080"

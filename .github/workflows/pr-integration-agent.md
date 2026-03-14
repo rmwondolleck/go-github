@@ -50,9 +50,10 @@ Process all open PRs in the repository and create a consolidated integration bra
 ### Issue Label Trigger (issues: labeled)
 **Only process** when the label added is:
 - `epic-integration`
+- `ready-for-integration`
 
 **Skip and exit with noop** if:
-- The label is anything other than `epic-integration`
+- The label is anything other than `epic-integration` or `ready-for-integration`
 - There are fewer than 2 open PRs to integrate
 - An integration PR is already open (title starts with "Epic:")
 - The triggering issue is labeled `blocked`, `wip`, `on-hold`, or `needs-discussion`
@@ -60,9 +61,10 @@ Process all open PRs in the repository and create a consolidated integration bra
 ### PR Label Trigger (pull_request: labeled)
 **Only process** when the label added is:
 - `epic-integration`
+- `ready-for-integration`
 
 **Skip and exit with noop** if:
-- The label is anything other than `epic-integration`
+- The label is anything other than `epic-integration` or `ready-for-integration`
 - There are fewer than 2 open PRs to integrate
 - An integration PR is already open (title starts with "Epic:")
 - The triggering PR is labeled `blocked`, `wip`, `on-hold`, or `needs-discussion`

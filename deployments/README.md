@@ -30,6 +30,26 @@ Before deploying, ensure you have:
 
 ## Docker Deployment
 
+### Dockerfile Options
+
+The project provides two Dockerfile options:
+
+1. **`Dockerfile`** (Default) - Uses Alpine Linux base image
+   - **Image size**: ~35-40MB
+   - **Base image**: `alpine:latest`
+   - **Security**: Runs as non-root user (UID 1000)
+   - **Features**: Includes curl for health checks, shell available for debugging
+   - **Health checks**: Built-in Docker HEALTHCHECK using curl
+   - **Best for**: Standard deployments with health check support
+
+2. **`Dockerfile.distroless`** - Uses distroless base image
+   - **Image size**: ~33MB
+   - **Base image**: `gcr.io/distroless/static-debian12:nonroot`
+   - **Security**: Runs as non-root user (UID 65532), minimal attack surface
+   - **Features**: No shell, package manager, or unnecessary binaries
+   - **Health checks**: Use Kubernetes liveness/readiness probes or external monitoring
+   - **Best for**: Production deployments requiring maximum security and minimal size
+
 ### Building the Docker Image
 
 The project uses a multi-stage Dockerfile for optimized image size (<50MB).
@@ -42,10 +62,16 @@ make docker
 
 This builds the image as `homelab-api:latest`.
 
-#### Build using Docker directly
+#### Build using Docker directly (default - Alpine)
 
 ```bash
 docker build -t homelab-api:latest -f deployments/Dockerfile .
+```
+
+#### Build using distroless variant (smaller, more secure)
+
+```bash
+docker build -t homelab-api:distroless -f deployments/Dockerfile.distroless .
 ```
 
 #### Build arguments

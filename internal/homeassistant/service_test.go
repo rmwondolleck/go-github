@@ -29,6 +29,7 @@ package homeassistant
 // - sensor: none (read-only devices)
 
 import (
+	"context"
 	"errors"
 	"go-github/internal/models"
 	"testing"
@@ -86,91 +87,9 @@ func (m *mockDeviceStore) GetDevice(id string) (*models.Device, error) {
 	return device, nil
 }
 
-// Service represents the HomeAssistant service interface
-// 
-// NOTE: This interface is intentionally defined in the test file as part of TDD methodology.
-// Following Test-Driven Development, tests are written FIRST before implementation.
-// When the real service.go file is created, this interface should be moved there,
-// and the mockService below will be replaced by the real implementation.
-// The tests will then verify that the real implementation meets the specification.
-type Service interface {
-	ExecuteCommand(deviceID string, command *Command) error
-}
-
-// mockService is a mock implementation for testing
-// This simulates the expected behavior of the real service.
-// It demonstrates what the real implementation should do:
-// 1. Validate the command
-// 2. Check if device exists
-// 3. Verify device is controllable
-// 4. Validate action is supported for device type
-// 5. Execute the command
-type mockService struct {
-	store *mockDeviceStore
-}
-
-func newMockService(store *mockDeviceStore) *mockService {
-	return &mockService{
-		store: store,
-	}
-}
-
-// ExecuteCommand simulates command execution logic
-// This is what the real implementation should do
-func (s *mockService) ExecuteCommand(deviceID string, command *Command) error {
-	// Validate command
-	if err := command.Validate(); err != nil {
-		return err
-	}
-
-	// Check if device exists
-	device, err := s.store.GetDevice(deviceID)
-	if err != nil {
-		return errors.New("device not found")
-	}
-
-	// Check if device is controllable
-	if !device.Controllable {
-		return errors.New("device is read-only")
-	}
-
-	// Validate action based on device type
-	validActions := getValidActionsForDeviceType(device.Type)
-	if !isValidAction(command.Action, validActions) {
-		return errors.New("invalid action for device type")
-	}
-
-	// Command execution would happen here in real implementation
-	return nil
-}
-
-// Helper function to get valid actions for a device type
-func getValidActionsForDeviceType(deviceType string) []string {
-	validActionsMap := map[string][]string{
-		"light": {"turn_on", "turn_off", "set_brightness"},
-		"switch": {"turn_on", "turn_off"},
-		"sensor": {}, // Sensors have no valid actions as they're read-only
-	}
-	
-	if actions, exists := validActionsMap[deviceType]; exists {
-		return actions
-	}
-	return []string{}
-}
-
-// Helper function to check if an action is valid
-func isValidAction(action string, validActions []string) bool {
-	for _, validAction := range validActions {
-		if action == validAction {
-			return true
-		}
-	}
-	return false
-}
-
 func TestExecuteCommand_SucceedsForValidDevice(t *testing.T) {
 	store := newMockDeviceStore()
-	service := newMockService(store)
+	service := NewHomeAssistantService(store)
 
 	tests := []struct {
 		name     string
@@ -230,7 +149,7 @@ func TestExecuteCommand_SucceedsForValidDevice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ExecuteCommand(tt.deviceID, tt.command)
+			err := service.ExecuteCommand(context.Background(), tt.deviceID, tt.command)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExecuteCommand() error = %v, wantErr %v", err, tt.wantErr)
@@ -241,7 +160,7 @@ func TestExecuteCommand_SucceedsForValidDevice(t *testing.T) {
 
 func TestExecuteCommand_FailsForInvalidDevice(t *testing.T) {
 	store := newMockDeviceStore()
-	service := newMockService(store)
+	service := NewHomeAssistantService(store)
 
 	tests := []struct {
 		name     string
@@ -280,7 +199,7 @@ func TestExecuteCommand_FailsForInvalidDevice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ExecuteCommand(tt.deviceID, tt.command)
+			err := service.ExecuteCommand(context.Background(), tt.deviceID, tt.command)
 
 			if err == nil {
 				t.Errorf("ExecuteCommand() expected error, got nil")
@@ -296,7 +215,7 @@ func TestExecuteCommand_FailsForInvalidDevice(t *testing.T) {
 
 func TestExecuteCommand_FailsForReadOnlyDevice(t *testing.T) {
 	store := newMockDeviceStore()
-	service := newMockService(store)
+	service := NewHomeAssistantService(store)
 
 	tests := []struct {
 		name     string
@@ -329,7 +248,7 @@ func TestExecuteCommand_FailsForReadOnlyDevice(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ExecuteCommand(tt.deviceID, tt.command)
+			err := service.ExecuteCommand(context.Background(), tt.deviceID, tt.command)
 
 			if err == nil {
 				t.Errorf("ExecuteCommand() expected error for read-only device, got nil")
@@ -345,7 +264,7 @@ func TestExecuteCommand_FailsForReadOnlyDevice(t *testing.T) {
 
 func TestExecuteCommand_FailsForInvalidAction(t *testing.T) {
 	store := newMockDeviceStore()
-	service := newMockService(store)
+	service := NewHomeAssistantService(store)
 
 	tests := []struct {
 		name     string
@@ -393,7 +312,7 @@ func TestExecuteCommand_FailsForInvalidAction(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ExecuteCommand(tt.deviceID, tt.command)
+			err := service.ExecuteCommand(context.Background(), tt.deviceID, tt.command)
 
 			if err == nil {
 				t.Errorf("ExecuteCommand() expected error for invalid action, got nil")
@@ -410,7 +329,7 @@ func TestExecuteCommand_FailsForInvalidAction(t *testing.T) {
 // Edge cases and additional validation tests
 func TestExecuteCommand_EdgeCases(t *testing.T) {
 	store := newMockDeviceStore()
-	service := newMockService(store)
+	service := NewHomeAssistantService(store)
 
 	tests := []struct {
 		name     string
@@ -472,7 +391,7 @@ func TestExecuteCommand_EdgeCases(t *testing.T) {
 				}()
 			}
 
-			err := service.ExecuteCommand(tt.deviceID, tt.command)
+			err := service.ExecuteCommand(context.Background(), tt.deviceID, tt.command)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExecuteCommand() error = %v, wantErr %v", err, tt.wantErr)
@@ -491,7 +410,7 @@ func TestExecuteCommand_EdgeCases(t *testing.T) {
 // TestExecuteCommand_ConcurrentExecution tests thread safety
 func TestExecuteCommand_ConcurrentExecution(t *testing.T) {
 	store := newMockDeviceStore()
-	service := newMockService(store)
+	service := NewHomeAssistantService(store)
 
 	// Channel to collect errors from goroutines
 	errChan := make(chan error, 10)
@@ -502,7 +421,7 @@ func TestExecuteCommand_ConcurrentExecution(t *testing.T) {
 				Action:     "turn_on",
 				Parameters: map[string]interface{}{"entity_id": "light.living_room"},
 			}
-			err := service.ExecuteCommand("light.living_room", cmd)
+			err := service.ExecuteCommand(context.Background(), "light.living_room", cmd)
 			errChan <- err
 		}()
 	}
@@ -519,7 +438,7 @@ func TestExecuteCommand_ConcurrentExecution(t *testing.T) {
 // TestExecuteCommand_ValidatesCommandBeforeDeviceLookup ensures proper validation order
 func TestExecuteCommand_ValidatesCommandBeforeDeviceLookup(t *testing.T) {
 	store := newMockDeviceStore()
-	service := newMockService(store)
+	service := NewHomeAssistantService(store)
 
 	// Invalid command should fail validation before device lookup
 	invalidCommand := &Command{
@@ -527,7 +446,7 @@ func TestExecuteCommand_ValidatesCommandBeforeDeviceLookup(t *testing.T) {
 		Parameters: map[string]interface{}{"entity_id": "light.living_room"},
 	}
 
-	err := service.ExecuteCommand("light.living_room", invalidCommand)
+	err := service.ExecuteCommand(context.Background(), "light.living_room", invalidCommand)
 	
 	if err == nil {
 		t.Error("ExecuteCommand() should validate command before device lookup")

@@ -1,4 +1,23 @@
 basePath: /
+definitions:
+  models.Service:
+    properties:
+      endpoint:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
+  models.ServicesResponse:
+    properties:
+      services:
+        items:
+          $ref: '#/definitions/models.Service'
+        type: array
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -30,6 +49,19 @@ paths:
       summary: API root
       tags:
       - api
+  /api/v1/services:
+    get:
+      description: Returns list of all services in the homelab
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ServicesResponse'
+      summary: List available services
+      tags:
+      - services
   /health:
     get:
       consumes:

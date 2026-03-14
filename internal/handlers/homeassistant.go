@@ -76,8 +76,19 @@ var mockDevices = map[string]*models.Device{
 	},
 }
 
-// ExecuteCommandHandler handles POST /api/v1/homeassistant/devices/{id}/command
-// It validates the command and executes it on the specified device.
+// ExecuteCommandHandler godoc
+// @Summary Execute a device command
+// @Description Execute a control command on a HomeAssistant device
+// @Tags homeassistant
+// @Accept json
+// @Produce json
+// @Param id path string true "Device ID"
+// @Param command body homeassistant.Command true "Command to execute"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 405 {object} models.ErrorResponse
+// @Router /api/v1/homeassistant/devices/{id}/command [post]
 func ExecuteCommandHandler(c *gin.Context) {
 	deviceID := c.Param("id")
 

@@ -15,7 +15,6 @@ import (
 )
 
 // TestListClusterServices_Returns200 tests that the cluster services endpoint returns 200 with a service list
-// TDD: This test is written BEFORE implementation - it will FAIL until GET /api/v1/cluster/services is implemented
 func TestListClusterServices_Returns200(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

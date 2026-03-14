@@ -70,21 +70,19 @@ func TestPutResponseInPool(t *testing.T) {
 func TestPoolReuse(t *testing.T) {
 	// Get a response from pool
 	resp1 := getResponseFromPool()
-	ptr1 := &resp1
-	
+
 	// Use and return it
 	putResponseInPool(resp1)
-	
+
 	// Get another response - might be the same object (pool reuse)
 	resp2 := getResponseFromPool()
-	ptr2 := &resp2
-	
+
 	// We can't guarantee it's the same object due to pool internals,
 	// but we can verify both are valid
-	assert.NotNil(t, ptr1)
-	assert.NotNil(t, ptr2)
+	assert.NotNil(t, resp1)
+	assert.NotNil(t, resp2)
 	assert.NotNil(t, resp2.Devices)
-	
+
 	// Cleanup
 	putResponseInPool(resp2)
 }

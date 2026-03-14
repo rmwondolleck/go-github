@@ -25,6 +25,7 @@ func New() *Server {
 	router.Use(middleware.RequestID())
 	router.Use(middleware.Logger())
 	router.Use(middleware.Recovery())
+	router.Use(middleware.CORS())
 
 	// Swagger documentation
 	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

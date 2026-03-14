@@ -4,10 +4,10 @@ import (
 	"testing"
 )
 
-// TDD: This test file is written BEFORE implementation following Test-Driven Development methodology.
-// These tests will FAIL until the cluster service implementation is completed in a future task.
+// Cluster service unit tests following TDD methodology.
+// Implementation is in internal/cluster/service.go.
 //
-// Expected implementation requirements:
+// Implementation:
 // - NewService() function that returns a Service with ListServices method
 // - Service.ListServices(filter string) ([]ServiceInfo, error) method
 // - Mock data: api-service, database-service, cache-service

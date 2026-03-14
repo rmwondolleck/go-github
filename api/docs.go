@@ -50,6 +50,97 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/cluster/services": {
+            "get": {
+                "description": "Returns a list of Kubernetes cluster services, optionally filtered by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cluster"
+                ],
+                "summary": "List cluster services",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter services by name (case-insensitive substring match)",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/cluster.ServiceInfo"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/homeassistant/devices/{id}/command": {
+            "post": {
+                "description": "Execute a control command on a HomeAssistant device",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "homeassistant"
+                ],
+                "summary": "Execute a device command",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Device ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Command to execute",
+                        "name": "command",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/homeassistant.Command"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/services": {
             "get": {
                 "description": "Returns list of all services in the homelab",
@@ -98,6 +189,52 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "cluster.ServiceInfo": {
+            "type": "object",
+            "properties": {
+                "endpoints": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "homeassistant.Command": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "models.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Service": {
             "type": "object",
             "properties": {

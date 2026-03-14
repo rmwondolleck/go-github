@@ -20,7 +20,7 @@ func TestExecuteCommand_Returns200ForValidCommand(t *testing.T) {
 
 	// Arrange
 	srv := server.New()
-	
+
 	// Valid command payload
 	command := map[string]interface{}{
 		"action": "turn_on",
@@ -28,25 +28,25 @@ func TestExecuteCommand_Returns200ForValidCommand(t *testing.T) {
 			"brightness": 80,
 		},
 	}
-	
+
 	body, err := json.Marshal(command)
 	assert.NoError(t, err)
-	
+
 	// Act
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/api/v1/homeassistant/devices/device-001/command", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	srv.Router().ServeHTTP(w, req)
-	
+
 	// Assert
 	assert.Equal(t, http.StatusOK, w.Code, "Expected HTTP 200 for valid command")
-	
+
 	// Verify JSON response structure
 	var response map[string]interface{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err, "Response should be valid JSON")
 	assert.NotNil(t, response, "Response body should not be nil")
-	
+
 	// Response should contain success information
 	// The exact structure will be defined when implementing the endpoint
 	// For now, we just verify it's valid JSON
@@ -59,7 +59,7 @@ func TestExecuteCommand_Returns400ForInvalidAction(t *testing.T) {
 
 	// Arrange
 	srv := server.New()
-	
+
 	tests := []struct {
 		name    string
 		command map[string]interface{}
@@ -92,22 +92,22 @@ func TestExecuteCommand_Returns400ForInvalidAction(t *testing.T) {
 			reason: "parameters field is required (can be empty map, but not nil)",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			body, err := json.Marshal(tt.command)
 			assert.NoError(t, err)
-			
+
 			// Act
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("POST", "/api/v1/homeassistant/devices/device-001/command", bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 			srv.Router().ServeHTTP(w, req)
-			
+
 			// Assert
 			assert.Equal(t, http.StatusBadRequest, w.Code, "Expected HTTP 400 for invalid command: %s", tt.reason)
-			
+
 			// Verify error response structure
 			var errorResponse models.ErrorResponse
 			err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
@@ -126,7 +126,7 @@ func TestExecuteCommand_Returns405ForReadOnlyDevice(t *testing.T) {
 
 	// Arrange
 	srv := server.New()
-	
+
 	// Valid command payload, but device is read-only
 	command := map[string]interface{}{
 		"action": "turn_on",
@@ -134,10 +134,10 @@ func TestExecuteCommand_Returns405ForReadOnlyDevice(t *testing.T) {
 			"brightness": 80,
 		},
 	}
-	
+
 	body, err := json.Marshal(command)
 	assert.NoError(t, err)
-	
+
 	// Act
 	// Using a device ID that should be read-only (non-controllable)
 	// The actual implementation will need to check the device's Controllable field
@@ -145,10 +145,10 @@ func TestExecuteCommand_Returns405ForReadOnlyDevice(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/homeassistant/devices/readonly-sensor-001/command", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	srv.Router().ServeHTTP(w, req)
-	
+
 	// Assert
 	assert.Equal(t, http.StatusMethodNotAllowed, w.Code, "Expected HTTP 405 for read-only device")
-	
+
 	// Verify error response structure
 	var errorResponse models.ErrorResponse
 	err = json.Unmarshal(w.Body.Bytes(), &errorResponse)

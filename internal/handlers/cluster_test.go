@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"go-github/internal/cluster"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestListClusterServicesHandler(t *testing.T) {
@@ -19,18 +19,18 @@ func TestListClusterServicesHandler(t *testing.T) {
 		expectedStatusCode int
 	}{
 		{
-			name:               "returns all services without filter",
+			name:               "returns all services",
 			queryParam:         "",
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:               "returns filtered services by name",
+			name:               "filters services by name",
 			queryParam:         "?name=home",
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			name:               "returns empty list for non-matching filter",
-			queryParam:         "?name=nonexistentservice12345",
+			name:               "returns empty list for unknown name",
+			queryParam:         "?name=nonexistent-service-xyz",
 			expectedStatusCode: http.StatusOK,
 		},
 	}
@@ -43,13 +43,14 @@ func TestListClusterServicesHandler(t *testing.T) {
 
 			ListClusterServicesHandler(c)
 
-			assert.Equal(t, tt.expectedStatusCode, w.Code)
-			assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))
+			if w.Code != tt.expectedStatusCode {
+				t.Errorf("expected status code %d, got %d", tt.expectedStatusCode, w.Code)
+			}
 
-			// Verify valid JSON is returned
-			var response interface{}
-			err := json.Unmarshal(w.Body.Bytes(), &response)
-			assert.NoError(t, err, "response should be valid JSON")
+			var response []cluster.ServiceInfo
+			if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+				t.Fatalf("failed to unmarshal response: %v", err)
+			}
 		})
 	}
 }

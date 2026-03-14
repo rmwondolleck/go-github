@@ -1,0 +1,30 @@
+# PR Integration Agent - Lock Configuration
+# This file prevents the PR integration agent from running automatically.
+# Remove the .lock suffix to enable the workflow.
+#
+# To enable: rename to pr-integration-agent.yml
+# To use: trigger manually via workflow_dispatch, label an issue with 'epic-integration', or label a PR with 'epic-integration'
+#
+# Safety: This agent creates branches and PRs. It should only be enabled
+# when you are ready to consolidate open PRs into an epic branch.
+
+name: PR Integration Agent (Locked)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  locked:
+    name: Agent Locked
+    runs-on: ubuntu-latest
+    steps:
+      - name: Agent is locked
+        run: |
+          echo "PR Integration Agent is currently locked."
+          echo "To enable, rename pr-integration-agent.lock.yml to pr-integration-agent.yml"
+          echo "or trigger via the markdown workflow: pr-integration-agent.md"

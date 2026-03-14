@@ -38,7 +38,7 @@
 | Q2 | Device list source | Encoded: FR-012 added — device catalogue sourced from existing mock device store used by command handler |
 | Q3 | Required prompt templates | Encoded: minimum set defined — `device_control` (arg: device_name) and `service_status` (arg: service_name) |
 | Q4 | Server exit/restart behaviour | Encoded: server exits cleanly on disconnect; no auto-restart; client host is responsible for relaunch |
-| Q5 | Claude Desktop wiring | Encoded: SC-008 + assumption added — config snippet required in project docs |
+| Q5 | Client tooling | Corrected: all Claude Desktop references replaced with GitHub Copilot (VS Code + JetBrains); config snippet target is `.vscode/mcp.json` / JetBrains MCP settings |
 
 ## Notes
 

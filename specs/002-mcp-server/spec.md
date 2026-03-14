@@ -10,7 +10,7 @@
 
 ### User Story 1 - AI Assistant Discovers Home Lab Capabilities (Priority: P1)
 
-A developer connects an AI assistant (e.g., Claude Desktop, Cline, or any MCP-compatible client) to the home lab service. The AI assistant automatically discovers what data and actions are available — devices, services, cluster status, health — without the developer writing any custom integration code.
+A developer connects GitHub Copilot (via VS Code or JetBrains) or any MCP-compatible client to the home lab service. The AI assistant automatically discovers what data and actions are available — devices, services, cluster status, health — without the developer writing any custom integration code.
 
 **Why this priority**: Discovery is the entry point for all other functionality. Without it, the AI assistant cannot read data or take actions. It is the foundation on which all other stories depend.
 
@@ -86,7 +86,7 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 - What happens when the MCP server receives a malformed or unparseable message? → Returns a standard error response; does not crash
 - What happens when the underlying home lab data source is unavailable during a read? → Returns a clear error to the client; the server remains running
 - What happens when two requests arrive from the same client in rapid succession? → Both are handled correctly and in order without corruption. Note: each server process serves exactly one client via stdin/stdout; running multiple clients requires launching multiple server processes
-- What happens when the client disconnects unexpectedly mid-session? → The server cleans up the session and exits cleanly; the server process does not auto-restart — the client or its host (e.g., Claude Desktop) is responsible for relaunching the process
+- What happens when the client disconnects unexpectedly mid-session? → The server cleans up the session and exits cleanly; the server process does not auto-restart — the IDE (e.g., VS Code or JetBrains with Copilot) is responsible for relaunching the process
 - What happens if the server encounters an unrecoverable internal error? → The server logs the error to stderr and exits with a non-zero status code; it does not silently hang
 - What happens when a device command is attempted with a device that does not exist? → Returns a clear "device not found" error
 
@@ -129,17 +129,17 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 - **SC-005**: Test coverage for the new MCP server component is at or above 80%
 - **SC-006**: The MCP server binary builds and starts successfully from a clean checkout
 - **SC-007**: All existing tests in the project continue to pass after this feature is added
-- **SC-008**: A `claude_desktop_config.json` snippet is provided in the project documentation so a developer can wire the MCP server into Claude Desktop without additional research
+- **SC-008**: A Copilot MCP server configuration snippet (`.vscode/mcp.json` for VS Code, equivalent for JetBrains) is provided in the project documentation so a developer can wire the MCP server into GitHub Copilot without additional research
 
 ---
 
 ## Assumptions
 
-- The MCP server communicates over **standard input/output** (stdin/stdout), which is the standard connection method used by Claude Desktop, Cline, and most MCP-compatible clients for local server processes
+- The MCP server communicates over **standard input/output** (stdin/stdout), which is the standard connection method used by GitHub Copilot in VS Code and JetBrains, and all MCP-compatible clients for local server processes
 - The MCP server runs as a **separate process** from the existing HTTP API server but shares the same codebase
 - **No authentication or authorisation** is required for the initial version — the server is assumed to run locally and be trusted by the process that launches it
 - The existing mock data used by the home automation and cluster services is acceptable for this version; connecting to real external systems is out of scope
 - HTTP-based transport (e.g., Server-Sent Events) is **out of scope** for this feature; stdin/stdout only
 - The targeted MCP protocol version is the **current stable specification** as of the feature creation date
-- Each running MCP server process serves **exactly one client** via stdin/stdout; running multiple simultaneous AI clients requires launching multiple server processes — this is standard MCP stdio behaviour and is handled by the client host (e.g., Claude Desktop)
-- A **Claude Desktop configuration snippet** (`claude_desktop_config.json`) must be included in project documentation so developers can connect without additional research
+- Each running MCP server process serves **exactly one client** via stdin/stdout; running multiple simultaneous Copilot sessions requires launching multiple server processes — this is standard MCP stdio behaviour and is managed by the IDE
+- A **Copilot MCP configuration snippet** (`.vscode/mcp.json` for VS Code, equivalent for JetBrains) must be included in project documentation so developers can connect without additional research

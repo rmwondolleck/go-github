@@ -69,6 +69,10 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 
 **Independent Test**: A developer retrieves a prompt template by name with specific arguments (e.g., a device name), and receives a fully rendered prompt ready for use with an AI model.
 
+**Minimum required prompt templates**:
+- `device_control` — guides an AI to control a named device; required argument: `device_name`
+- `service_status` — guides an AI to report on a named service; required argument: `service_name`
+
 **Acceptance Scenarios**:
 
 1. **Given** a connected session, **When** the AI requests the device control prompt template with a device name argument, **Then** the server returns a rendered, ready-to-use prompt
@@ -81,8 +85,9 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 
 - What happens when the MCP server receives a malformed or unparseable message? → Returns a standard error response; does not crash
 - What happens when the underlying home lab data source is unavailable during a read? → Returns a clear error to the client; the server remains running
-- What happens when two AI clients send requests at the same time? → Both requests are handled correctly and independently without corruption
-- What happens when the client disconnects unexpectedly mid-session? → The server cleans up the session and continues serving other clients
+- What happens when two requests arrive from the same client in rapid succession? → Both are handled correctly and in order without corruption. Note: each server process serves exactly one client via stdin/stdout; running multiple clients requires launching multiple server processes
+- What happens when the client disconnects unexpectedly mid-session? → The server cleans up the session and exits cleanly; the server process does not auto-restart — the client or its host (e.g., Claude Desktop) is responsible for relaunching the process
+- What happens if the server encounters an unrecoverable internal error? → The server logs the error to stderr and exits with a non-zero status code; it does not silently hang
 - What happens when a device command is attempted with a device that does not exist? → Returns a clear "device not found" error
 
 ---
@@ -101,7 +106,8 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 - **FR-008**: The system MUST be runnable as a standalone process independently of the existing HTTP API server
 - **FR-009**: The system MUST be launchable via the existing project build tooling (Makefile)
 - **FR-010**: The system MUST return structured, descriptive errors for all failure cases
-- **FR-011**: The system MUST handle concurrent client requests safely without data corruption or crashes
+- **FR-011**: The system MUST handle concurrent requests on the same session safely without data corruption or crashes
+- **FR-012**: The system MUST expose the home automation device catalogue as a readable data source; the device list is sourced from the same mock device store used by the device command action — no separate data store is introduced
 
 ### Key Entities
 
@@ -123,6 +129,7 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 - **SC-005**: Test coverage for the new MCP server component is at or above 80%
 - **SC-006**: The MCP server binary builds and starts successfully from a clean checkout
 - **SC-007**: All existing tests in the project continue to pass after this feature is added
+- **SC-008**: A `claude_desktop_config.json` snippet is provided in the project documentation so a developer can wire the MCP server into Claude Desktop without additional research
 
 ---
 
@@ -134,3 +141,5 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 - The existing mock data used by the home automation and cluster services is acceptable for this version; connecting to real external systems is out of scope
 - HTTP-based transport (e.g., Server-Sent Events) is **out of scope** for this feature; stdin/stdout only
 - The targeted MCP protocol version is the **current stable specification** as of the feature creation date
+- Each running MCP server process serves **exactly one client** via stdin/stdout; running multiple simultaneous AI clients requires launching multiple server processes — this is standard MCP stdio behaviour and is handled by the client host (e.g., Claude Desktop)
+- A **Claude Desktop configuration snippet** (`claude_desktop_config.json`) must be included in project documentation so developers can connect without additional research

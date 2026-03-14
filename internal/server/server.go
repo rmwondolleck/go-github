@@ -38,6 +38,12 @@ func New() *Server {
 		// Placeholder for API routes
 		v1.GET("", apiRootHandler)
 		v1.GET("/services", handlers.ListServicesHandler)
+
+		// Cluster services endpoint
+		v1.GET("/cluster/services", handlers.ListClusterServicesHandler)
+
+		// HomeAssistant device endpoints
+		v1.POST("/homeassistant/devices/:id/command", handlers.ExecuteCommandHandler)
 	}
 
 	return &Server{router: router}

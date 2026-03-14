@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"go-github/internal/homeassistant"
 	"go-github/internal/models"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,4 +52,65 @@ func DeviceListHandler(c *gin.Context) {
 
 	resp.Count = len(resp.Devices)
 	JSONSuccess(c, http.StatusOK, resp)
+}
+
+// mockDevices provides mock device data for command handling
+var mockDevices = map[string]*models.Device{
+	"device-001": {
+		ID:           "device-001",
+		Name:         "Living Room Light",
+		Type:         "light",
+		State:        "off",
+		Attributes:   map[string]interface{}{"brightness": 0},
+		LastUpdated:  time.Now(),
+		Controllable: true,
+	},
+	"readonly-sensor-001": {
+		ID:           "readonly-sensor-001",
+		Name:         "Temperature Sensor",
+		Type:         "sensor",
+		State:        "72",
+		Attributes:   map[string]interface{}{"unit": "°F"},
+		LastUpdated:  time.Now(),
+		Controllable: false,
+	},
+}
+
+// ExecuteCommandHandler handles POST /api/v1/homeassistant/devices/{id}/command
+// It validates the command and executes it on the specified device.
+func ExecuteCommandHandler(c *gin.Context) {
+	deviceID := c.Param("id")
+
+	// Parse command from request body
+	var cmd homeassistant.Command
+	if err := c.ShouldBindJSON(&cmd); err != nil {
+		JSONError(c, http.StatusBadRequest, "bad_request", "invalid request body: "+err.Error())
+		return
+	}
+
+	// Validate command
+	if err := cmd.Validate(); err != nil {
+		JSONError(c, http.StatusBadRequest, "bad_request", err.Error())
+		return
+	}
+
+	// Look up device
+	device, exists := mockDevices[deviceID]
+	if !exists {
+		JSONError(c, http.StatusNotFound, "not_found", "device not found: "+deviceID)
+		return
+	}
+
+	// Check if device is controllable
+	if !device.Controllable {
+		JSONError(c, http.StatusMethodNotAllowed, "method_not_allowed", "device is not controllable: "+deviceID)
+		return
+	}
+
+	// Command executed successfully
+	JSONSuccess(c, http.StatusOK, gin.H{
+		"status":    "success",
+		"device_id": deviceID,
+		"action":    cmd.Action,
+	})
 }

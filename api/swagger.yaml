@@ -1,4 +1,53 @@
 basePath: /
+definitions:
+  cluster.ServiceInfo:
+    properties:
+      endpoints:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      namespace:
+        type: string
+      status:
+        type: string
+    type: object
+  homeassistant.Command:
+    properties:
+      action:
+        type: string
+      parameters:
+        additionalProperties: true
+        type: object
+    type: object
+  models.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  models.Service:
+    properties:
+      endpoint:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    type: object
+  models.ServicesResponse:
+    properties:
+      services:
+        items:
+          $ref: '#/definitions/models.Service'
+        type: array
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -30,6 +79,80 @@ paths:
       summary: API root
       tags:
       - api
+  /api/v1/cluster/services:
+    get:
+      description: Returns a list of Kubernetes cluster services, optionally filtered
+        by name
+      parameters:
+      - description: Filter services by name (case-insensitive substring match)
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/cluster.ServiceInfo'
+            type: array
+      summary: List cluster services
+      tags:
+      - cluster
+  /api/v1/homeassistant/devices/{id}/command:
+    post:
+      consumes:
+      - application/json
+      description: Execute a control command on a HomeAssistant device
+      parameters:
+      - description: Device ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Command to execute
+        in: body
+        name: command
+        required: true
+        schema:
+          $ref: '#/definitions/homeassistant.Command'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Execute a device command
+      tags:
+      - homeassistant
+  /api/v1/services:
+    get:
+      description: Returns list of all services in the homelab
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ServicesResponse'
+      summary: List available services
+      tags:
+      - services
   /health:
     get:
       consumes:

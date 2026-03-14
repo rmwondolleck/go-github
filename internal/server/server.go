@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"go-github/internal/handlers"
 	"go-github/internal/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,7 @@ func New() *Server {
 	router.Use(middleware.RequestID())
 	router.Use(middleware.Logger())
 	router.Use(middleware.Recovery())
+	router.Use(middleware.CORS())
 
 	// Swagger documentation
 	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -36,6 +38,13 @@ func New() *Server {
 	{
 		// Placeholder for API routes
 		v1.GET("", apiRootHandler)
+		v1.GET("/services", handlers.ListServicesHandler)
+
+		// Cluster services endpoint
+		v1.GET("/cluster/services", handlers.ListClusterServicesHandler)
+
+		// HomeAssistant device endpoints
+		v1.POST("/homeassistant/devices/:id/command", handlers.ExecuteCommandHandler)
 	}
 
 	return &Server{router: router}

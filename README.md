@@ -4,6 +4,7 @@ A RESTful API service for managing and monitoring home lab infrastructure runnin
 
 [![Go Version](https://img.shields.io/badge/Go-1.25-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Coverage](https://img.shields.io/badge/coverage-96.1%25-brightgreen.svg)](COVERAGE_REPORT.md)
 
 ## 🚀 Current Status (March 2, 2026)
 
@@ -384,6 +385,20 @@ open http://localhost:8080/api/docs/index.html
 ```
 
 ## 🧪 Testing
+
+### Coverage Summary
+
+| Package | Coverage |
+|---------|----------|
+| `internal/cluster` | 100.0% |
+| `internal/handlers` | 87.8% |
+| `internal/health` | 100.0% |
+| `internal/homeassistant` | 100.0% |
+| `internal/middleware` | 100.0% |
+| `internal/server` | 100.0% |
+| **Total** | **96.1%** ✅ |
+
+> ✅ Coverage exceeds the 80% target. See [COVERAGE_REPORT.md](COVERAGE_REPORT.md) for the full report.
 
 ### Run All Tests
 

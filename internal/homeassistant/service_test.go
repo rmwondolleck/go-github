@@ -87,7 +87,7 @@ func (m *mockDeviceStore) GetDevice(id string) (*models.Device, error) {
 }
 
 // Service represents the HomeAssistant service interface
-// 
+//
 // NOTE: This interface is intentionally defined in the test file as part of TDD methodology.
 // Following Test-Driven Development, tests are written FIRST before implementation.
 // When the real service.go file is created, this interface should be moved there,
@@ -147,11 +147,11 @@ func (s *mockService) ExecuteCommand(deviceID string, command *Command) error {
 // Helper function to get valid actions for a device type
 func getValidActionsForDeviceType(deviceType string) []string {
 	validActionsMap := map[string][]string{
-		"light": {"turn_on", "turn_off", "set_brightness"},
+		"light":  {"turn_on", "turn_off", "set_brightness"},
 		"switch": {"turn_on", "turn_off"},
 		"sensor": {}, // Sensors have no valid actions as they're read-only
 	}
-	
+
 	if actions, exists := validActionsMap[deviceType]; exists {
 		return actions
 	}
@@ -528,7 +528,7 @@ func TestExecuteCommand_ValidatesCommandBeforeDeviceLookup(t *testing.T) {
 	}
 
 	err := service.ExecuteCommand("light.living_room", invalidCommand)
-	
+
 	if err == nil {
 		t.Error("ExecuteCommand() should validate command before device lookup")
 		return

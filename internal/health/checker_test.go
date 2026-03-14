@@ -25,7 +25,7 @@ func TestCheck_ReturnsHealthyStatus(t *testing.T) {
 func TestCheck_IncludesUptimeInResponse(t *testing.T) {
 	// Arrange
 	checker := NewChecker()
-	
+
 	// Give the service a moment to establish uptime
 	time.Sleep(10 * time.Millisecond)
 

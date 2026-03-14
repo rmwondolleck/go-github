@@ -53,7 +53,7 @@ Process all open PRs in the repository and create a consolidated integration bra
 - The label is anything other than `epic-integration`
 - There are fewer than 2 open PRs to integrate
 - An integration PR is already open (title starts with "Epic:")
-- The triggering issue is labeled `blocked`, `on-hold`, or `needs-discussion`
+- The triggering issue is labeled `blocked`, `wip`, `on-hold`, or `needs-discussion`
 
 ## Task
 

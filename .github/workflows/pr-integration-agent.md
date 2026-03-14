@@ -9,6 +9,8 @@ on:
   workflow_dispatch:
   issues:
     types: [labeled]
+  pull_request:
+    types: [labeled]
 permissions:
   contents: read
   issues: read
@@ -40,7 +42,7 @@ understanding the context, dependencies, and integration points across all open 
 
 ## Trigger Conditions
 
-This workflow can be triggered in two ways:
+This workflow can be triggered in three ways:
 
 ### Manual Dispatch (workflow_dispatch)
 Process all open PRs in the repository and create a consolidated integration branch.
@@ -54,6 +56,16 @@ Process all open PRs in the repository and create a consolidated integration bra
 - There are fewer than 2 open PRs to integrate
 - An integration PR is already open (title starts with "Epic:")
 - The triggering issue is labeled `blocked`, `wip`, `on-hold`, or `needs-discussion`
+
+### PR Label Trigger (pull_request: labeled)
+**Only process** when the label added is:
+- `epic-integration`
+
+**Skip and exit with noop** if:
+- The label is anything other than `epic-integration`
+- There are fewer than 2 open PRs to integrate
+- An integration PR is already open (title starts with "Epic:")
+- The triggering PR is labeled `blocked`, `wip`, `on-hold`, or `needs-discussion`
 
 ## Task
 

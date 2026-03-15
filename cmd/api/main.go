@@ -32,6 +32,11 @@ import (
 // @schemes http
 
 func main() {
+	// MCP-only mode: ./bin/homelab-api mcp
+	// Starts the MCP stdio server without binding the HTTP port.
+	// Default (no args): starts both HTTP API and MCP stdio concurrently.
+	mcpOnly := len(os.Args) > 1 && os.Args[1] == "mcp"
+
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -42,36 +47,38 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	srv := server.New()
-
 	g, gctx := errgroup.WithContext(ctx)
 
-	// Launch HTTP server goroutine.
-	g.Go(func() error {
-		slog.Info("http server started", "port", port)
-		if err := srv.Run(port); err != nil {
-			return err
-		}
-		return nil
-	})
+	if !mcpOnly {
+		srv := server.New()
 
-	// Launch MCP stdio server goroutine.
+		// Launch HTTP server goroutine.
+		g.Go(func() error {
+			slog.Info("http server started", "port", port)
+			if err := srv.Run(port); err != nil {
+				return err
+			}
+			return nil
+		})
+
+		// Goroutine to trigger graceful HTTP shutdown when context is done.
+		g.Go(func() error {
+			<-gctx.Done()
+
+			slog.Info("shutting down http server...")
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			if err := srv.GracefulShutdown(shutdownCtx); err != nil {
+				slog.Error("http shutdown error", "error", err)
+			}
+			return nil
+		})
+	}
+
+	// Launch MCP stdio server goroutine (always runs).
 	g.Go(func() error {
 		return internalmcp.Run(gctx)
-	})
-
-	// Goroutine to trigger graceful HTTP shutdown when context is done.
-	g.Go(func() error {
-		<-gctx.Done()
-
-		slog.Info("shutting down servers...")
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		if err := srv.GracefulShutdown(shutdownCtx); err != nil {
-			slog.Error("http shutdown error", "error", err)
-		}
-		return nil
 	})
 
 	if err := g.Wait(); err != nil {

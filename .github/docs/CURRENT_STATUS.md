@@ -29,7 +29,7 @@ Protocol) stdio server **concurrently** with a single command — no subcommand 
 | MCP tool handler | `internal/mcp/tools.go` + `tools_test.go` |
 | MCP prompt handlers | `internal/mcp/prompts.go` + `prompts_test.go` |
 | MCP server tests | `internal/mcp/server_test.go` |
-| Binary dispatch (dual-mode) | `cmd/api/main.go` |
+| Binary dispatch (dual-mode) | `cmd/api/main.go` — default: HTTP+MCP concurrent; `mcp` arg: MCP-only |
 | IDE config | `.vscode/mcp.json` |
 | Documentation | `README.md`, `Makefile` |
 | Dependencies | `go.mod`, `go.sum` (`github.com/mark3labs/mcp-go v0.45.0`) |
@@ -52,14 +52,17 @@ All existing tests continue to pass. Zero `go vet` issues.
 ### Quick Start
 
 ```bash
-# Build the dual-mode binary
+# Build
 make build
 
-# Start both HTTP API and MCP stdio server
+# Mode 1 — default: HTTP API (port 8080) + MCP stdio concurrently
 ./bin/homelab-api
 
-# Quick smoke test
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1"}}}' | ./bin/homelab-api 2>/dev/null
+# Mode 2 — MCP-only: no HTTP port bound (IDE / local AI use)
+./bin/homelab-api mcp
+
+# Smoke test
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1"}}}' | ./bin/homelab-api mcp 2>/dev/null
 ```
 
 ### Branch Ready for Review

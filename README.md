@@ -382,9 +382,14 @@ The `homelab-api` binary runs **both** the HTTP API server and an MCP (Model Con
 
 ### How It Works
 
-- **HTTP API** serves Kubernetes traffic on port 8080 (existing behaviour, unchanged)
-- **MCP stdio server** listens on `stdin`/`stdout` for local IDE clients (VS Code Copilot, JetBrains AI)
-- Both modes run as goroutines under a shared context and both shut down on `SIGINT`/`SIGTERM`
+The binary supports **three modes**:
+
+| Command | HTTP API | MCP stdio | Use case |
+|---|---|---|---|
+| `./bin/homelab-api` | ✅ port 8080 | ✅ stdin/stdout | Default / Kubernetes |
+| `./bin/homelab-api mcp` | ❌ | ✅ stdin/stdout | Local IDE / AI assistant |
+
+Both modes handle `SIGINT`/`SIGTERM` cleanly. In Kubernetes the MCP server runs but idles harmlessly (stdin is `/dev/null`).
 
 ### Build & Run
 
@@ -393,23 +398,18 @@ The `homelab-api` binary runs **both** the HTTP API server and an MCP (Model Con
 make build
 # or: go build -o bin/homelab-api ./cmd/api
 
-# Run — starts BOTH HTTP API and MCP stdio server
-make run
-# or: ./bin/homelab-api
-```
+# Mode 1 — default: starts BOTH HTTP API and MCP stdio concurrently
+./bin/homelab-api
 
-You will see two log lines confirming both modes are active:
-
-```
-{"level":"INFO","msg":"http server started","port":"8080"}
-{"level":"INFO","msg":"mcp server started","transport":"stdio"}
+# Mode 2 — MCP only: no HTTP port bound (what your IDE uses)
+./bin/homelab-api mcp
 ```
 
 ### MCP Quick Smoke Test
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1"}}}' \
-  | ./bin/homelab-api 2>/dev/null
+  | ./bin/homelab-api mcp 2>/dev/null
 ```
 
 Expected response contains `"name":"go-github-homelab"`.
@@ -423,13 +423,14 @@ The `.vscode/mcp.json` file is already included in the repository:
   "servers": {
     "go-github-homelab": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/homelab-api"
+      "command": "${workspaceFolder}/bin/homelab-api",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-Open the Copilot chat panel, click the **MCP servers** button, and the `go-github-homelab` server will appear.
+VS Code spawns the binary in MCP-only mode (`mcp` arg) — no HTTP port is bound.
 
 ### JetBrains AI Configuration
 
@@ -439,8 +440,9 @@ In JetBrains IDEs (GoLand, IDEA, etc.) with the AI plugin:
 2. Click **+** to add a new server
 3. Set:
    - **Name**: `go-github-homelab`
-   - **Command**: path to `bin/homelab-api` (e.g. `/path/to/go-github/bin/homelab-api`)
-   - **Args**: *(leave empty)*
+   - **Command**: path to `bin/homelab-api`
+   - **Args**: `mcp`
+   - **Transport**: `stdio`
    - **Transport**: `stdio`
 
 ### Available Resources, Tools, and Prompts

@@ -3,7 +3,9 @@
 **Feature**: 002-mcp-server  
 **Protocol**: Model Context Protocol (MCP) via JSON-RPC 2.0  
 **Transport**: stdin/stdout (line-delimited JSON)  
-**Binary**: `bin/homelab-api` (integrated single binary — HTTP API + MCP stdio start concurrently, no subcommand needed)
+**Binary**: `bin/homelab-api` — three modes:
+- `./bin/homelab-api` — HTTP API (port 8080) + MCP stdio concurrently (default / k8s)
+- `./bin/homelab-api mcp` — MCP stdio only, no HTTP port bound (IDE / local dev)
 
 ---
 
@@ -414,17 +416,18 @@
   "servers": {
     "go-github-homelab": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/homelab-api"
+      "command": "${workspaceFolder}/bin/homelab-api",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-> **No `args` needed** — the MCP stdio server starts automatically alongside the HTTP API when the binary runs.
+> Uses `mcp` arg — MCP-only mode. The IDE gets a clean stdio pipe with no HTTP server binding port 8080.
 
 ### JetBrains (Manual Configuration)
 
 - **Name**: `go-github-homelab`
 - **Command**: `./bin/homelab-api`
-- **Args**: *(leave empty)*
+- **Args**: `mcp`
 - **Transport**: stdio

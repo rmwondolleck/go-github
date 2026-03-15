@@ -23,24 +23,31 @@ ls -la bin/homelab-api
 
 ## Run (Manual Test)
 
+The binary supports three modes:
+
 ```bash
-# A single command starts BOTH the HTTP API server (port 8080) AND the MCP stdio server
+# Mode 1 (default): starts BOTH HTTP API (port 8080) AND MCP stdio concurrently
 ./bin/homelab-api
 
-# Or via Make
-make run
+# Mode 2 (MCP-only): starts MCP stdio server only — no HTTP port bound
+# Use this when you only need local IDE/AI integration
+./bin/homelab-api mcp
+
+# Via Make
+make run       # Mode 1 — both servers
 ```
 
-Both the HTTP API and MCP server start concurrently under a shared context. Both shut down
-cleanly on `SIGINT`/`SIGTERM`. The MCP server reads JSON-RPC messages from stdin and writes
-responses to stdout. Diagnostic logs from both modes go to stderr.
+**Mode 1** is the default and what runs in Kubernetes. Both servers share a context and both shut down on `SIGINT`/`SIGTERM`.
+
+**Mode 2** (`mcp` arg) is ideal for local development — your IDE spawns the binary, it serves MCP over stdio, no port 8080 is bound. This is what `.vscode/mcp.json` and JetBrains use.
+
+The MCP server reads JSON-RPC messages from stdin and writes responses to stdout. All diagnostic logs go to stderr in both modes.
 
 ### Quick Smoke Test
 
-Send an initialize request by piping JSON to the binary (no subcommand needed):
-
 ```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}' | ./bin/homelab-api 2>/dev/null
+# Works in both modes — pipe to the binary directly
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}' | ./bin/homelab-api mcp 2>/dev/null
 ```
 
 You should see a JSON response with `serverInfo.name` = `"go-github-homelab"`.
@@ -57,13 +64,14 @@ You should see a JSON response with `serverInfo.name` = `"go-github-homelab"`.
   "servers": {
     "go-github-homelab": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/homelab-api"
+      "command": "${workspaceFolder}/bin/homelab-api",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-> No `args` needed — the MCP server starts automatically alongside the HTTP API when the binary runs.
+> VS Code spawns the binary with `mcp` arg — MCP-only mode, no HTTP port bound.
 
 3. Open the project in VS Code
 4. GitHub Copilot will auto-discover the MCP server configuration
@@ -76,7 +84,7 @@ You should see a JSON response with `serverInfo.name` = `"go-github-homelab"`.
 3. Click **Add** (+) and configure:
    - **Name**: `go-github-homelab`
    - **Command**: `./bin/homelab-api` (relative to project root)
-   - **Args**: *(leave empty)*
+   - **Args**: `mcp`
    - **Transport**: stdio
 4. Click **OK** and restart the AI Assistant
 5. Open the AI Assistant chat and ask: *"What services are running in my home lab?"*
@@ -97,9 +105,11 @@ go tool cover -html=coverage.out -o coverage.html
 
 ## Project Structure
 
-The MCP server is integrated into the existing single binary. Running `./bin/homelab-api`
-starts **both** the HTTP API server (port 8080) and the MCP stdio server concurrently — no
-subcommand or separate process required.
+The MCP server is integrated into the existing single binary. Three launch modes are supported:
+
+- `./bin/homelab-api` — default, starts HTTP API (port 8080) + MCP stdio concurrently
+- `./bin/homelab-api mcp` — MCP-only mode, no HTTP port bound (used by IDEs)
+- Kubernetes runs the default mode; the MCP server idles harmlessly when stdin is `/dev/null`
 
 ```
 cmd/api/
@@ -144,13 +154,13 @@ Once connected, ask your AI assistant:
 - Check Go version: `go version` (needs 1.25.0+)
 
 ### Copilot doesn't see the MCP server
-- **VS Code**: Check `.vscode/mcp.json` exists and the binary path is correct; ensure there are **no `args`** (MCP starts automatically)
-- **JetBrains**: Verify the MCP server entry in Settings → Tools → AI Assistant → MCP Servers; ensure Args is empty
-- Check stderr output: run `./bin/homelab-api 2>mcp-debug.log` and inspect `mcp-debug.log`
+- **VS Code**: Check `.vscode/mcp.json` exists, binary path is correct, and `args` contains `["mcp"]`
+- **JetBrains**: Verify the MCP server entry in Settings → Tools → AI Assistant → MCP Servers; ensure Args is `mcp`
+- Check stderr output: run `./bin/homelab-api mcp 2>mcp-debug.log` and inspect `mcp-debug.log`
 
 ### No response from server
 - The MCP server communicates via stdin/stdout — it won't produce output without input
-- Use the smoke test above to verify basic functionality
+- Use the smoke test above (`./bin/homelab-api mcp`) to verify basic functionality
 - Check that no other process is consuming stdin
 
 ## Dependencies

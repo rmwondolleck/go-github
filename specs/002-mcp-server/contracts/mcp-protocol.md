@@ -3,7 +3,7 @@
 **Feature**: 002-mcp-server  
 **Protocol**: Model Context Protocol (MCP) via JSON-RPC 2.0  
 **Transport**: stdin/stdout (line-delimited JSON)  
-**Binary**: `bin/homelab-api mcp` (integrated single binary, subcommand mode)
+**Binary**: `bin/homelab-api` (integrated single binary — HTTP API + MCP stdio start concurrently, no subcommand needed)
 
 ---
 
@@ -414,16 +414,17 @@
   "servers": {
     "go-github-homelab": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/homelab-api",
-      "args": ["mcp"]
+      "command": "${workspaceFolder}/bin/homelab-api"
     }
   }
 }
 ```
 
+> **No `args` needed** — the MCP stdio server starts automatically alongside the HTTP API when the binary runs.
+
 ### JetBrains (Manual Configuration)
 
 - **Name**: `go-github-homelab`
 - **Command**: `./bin/homelab-api`
-- **Args**: `mcp`
+- **Args**: *(leave empty)*
 - **Transport**: stdio

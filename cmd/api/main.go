@@ -57,7 +57,6 @@ func main() {
 
 	// Launch MCP stdio server goroutine.
 	g.Go(func() error {
-		slog.Info("mcp server started", "transport", "stdio")
 		return internalmcp.Run(gctx)
 	})
 

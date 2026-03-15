@@ -194,24 +194,38 @@ You are a home lab monitoring assistant. The user wants to know the status of th
 ## Entity Relationship Diagram
 
 ```
-┌─────────────────────┐     ┌──────────────────────┐
-│   cmd/api/main.go   │     │   internal/mcp/      │
-│   (single binary)   │     │   server.go          │
-│                     │     │   resources.go       │
-│  if "mcp" subcmd:   │────▶│   tools.go           │
-│    runMCP()         │     │   prompts.go         │
-│  else:              │     └──────────┬───────────┘
-│    runHTTPServer()  │                │ uses
-└────────┬────────────┘                │
-         │ uses                        ▼
-         ▼               ┌─────────────────────────┐
-┌─────────────────┐      │  Shared Data Providers   │
-│ internal/       │      │                         │
-│  handlers/      │─────▶│ homeassistant/devices.go │
-│  (HTTP layer)   │      │ services/provider.go     │
-└─────────────────┘      │ cluster/service.go       │
-                         │ health/checker.go        │
-                         └─────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│   cmd/api/main.go  (single binary, single command)       │
+│                                                           │
+│   errgroup.Go ──────────────────────────────────────┐    │
+│       │                                             │    │
+│       ▼ goroutine 1                  goroutine 2 ◀──┘    │
+│  srv.Run(port)               internalmcp.Run(ctx)        │
+│  (HTTP API :8080)            (MCP stdio)                 │
+│       │                             │                    │
+│       │ shared context (errgroup)   │                    │
+│       └──────────────┬──────────────┘                    │
+└──────────────────────┼───────────────────────────────────┘
+                       │ both use
+                       ▼
+         ┌─────────────────────────┐
+         │  Shared Data Providers  │
+         │                         │
+         │ homeassistant/devices.go │
+         │ services/provider.go     │
+         │ cluster/service.go       │
+         │ health/checker.go        │
+         └──────────┬──────────────┘
+                    │ consumed by
+          ┌─────────┴──────────┐
+          ▼                    ▼
+┌─────────────────┐  ┌──────────────────────┐
+│ internal/       │  │   internal/mcp/      │
+│  handlers/      │  │   server.go          │
+│  (HTTP layer)   │  │   resources.go       │
+│                 │  │   tools.go           │
+│                 │  │   prompts.go         │
+└─────────────────┘  └──────────────────────┘
 ```
 
 Both the HTTP handlers and MCP handlers consume the **same shared data providers**. No data duplication.

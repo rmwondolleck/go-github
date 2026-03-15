@@ -3,7 +3,9 @@
 **Feature**: 002-mcp-server  
 **Protocol**: Model Context Protocol (MCP) via JSON-RPC 2.0  
 **Transport**: stdin/stdout (line-delimited JSON)  
-**Binary**: `bin/homelab-api mcp` (integrated single binary, subcommand mode)
+**Binary**: `bin/homelab-api` — three modes:
+- `./bin/homelab-api` — HTTP API (port 8080) + MCP stdio concurrently (default / k8s)
+- `./bin/homelab-api mcp` — MCP stdio only, no HTTP port bound (IDE / local dev)
 
 ---
 
@@ -420,6 +422,8 @@
   }
 }
 ```
+
+> Uses `mcp` arg — MCP-only mode. The IDE gets a clean stdio pipe with no HTTP server binding port 8080.
 
 ### JetBrains (Manual Configuration)
 

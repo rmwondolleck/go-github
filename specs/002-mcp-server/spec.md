@@ -103,7 +103,7 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 - **FR-005**: The system MUST allow clients to execute any registered action and receive a structured result or error
 - **FR-006**: The system MUST allow clients to discover and retrieve pre-defined prompt templates with argument substitution
 - **FR-007**: The system MUST serve data from the existing home lab data sources — devices, services, cluster services, health — without duplicating that data
-- **FR-008**: The MCP server MUST start automatically alongside the existing HTTP API server when the binary is launched — no subcommand or separate process is required; both modes run concurrently under a shared context and shut down together on `SIGINT`/`SIGTERM`
+- **FR-008**: The binary MUST support three launch modes: (1) default — `./bin/homelab-api` starts both HTTP API and MCP stdio concurrently; (2) MCP-only — `./bin/homelab-api mcp` starts only the MCP stdio server without binding port 8080; (3) both modes share context cancellation and shut down cleanly on `SIGINT`/`SIGTERM`
 - **FR-009**: The system MUST be launchable via the existing project build tooling (Makefile)
 - **FR-010**: The system MUST return structured, descriptive errors for all failure cases
 - **FR-011**: The system MUST handle concurrent requests on the same session safely without data corruption or crashes
@@ -136,8 +136,8 @@ A developer building an AI-powered home lab dashboard uses pre-defined prompt te
 ## Assumptions
 
 - The MCP server communicates over **standard input/output** (stdin/stdout), which is the standard connection method used by GitHub Copilot in VS Code and JetBrains, and all MCP-compatible clients for local server processes
-- The MCP server runs **in the same process and binary** as the existing HTTP API server — both modes start concurrently with a single command (`./bin/homelab-api`); no subcommand or separate binary is required
-- The HTTP API continues to serve Kubernetes traffic on port 8080; the MCP server serves local IDE clients (VS Code Copilot, JetBrains AI) via stdin/stdout — **these serve different audiences and should not be conflated in k8s deployments**
+- The MCP server runs **in the same binary** as the existing HTTP API server. Two modes are supported: (1) `./bin/homelab-api` — starts HTTP API (port 8080) and MCP stdio concurrently; (2) `./bin/homelab-api mcp` — starts MCP stdio only, no HTTP port bound. Both modes share `SIGINT`/`SIGTERM` handling.
+- The HTTP API serves Kubernetes traffic on port 8080; the MCP server serves local IDE clients (VS Code Copilot, JetBrains AI) via stdin/stdout — **IDE configurations use the `mcp` arg to avoid binding port 8080 unnecessarily**
 - **No authentication or authorisation** is required for the initial version — the server is assumed to run locally and be trusted by the process that launches it
 - The existing mock data used by the home automation and cluster services is acceptable for this version; connecting to real external systems is out of scope
 - HTTP-based transport (e.g., Server-Sent Events) is **out of scope** for this feature; stdin/stdout only

@@ -48,10 +48,11 @@ Go: Follow official Go Code Review Comments guidelines. Use gofmt, go vet, golan
 
 ## Key Patterns
 
-- **Single command**: `./bin/homelab-api` starts **both** HTTP API (port 8080) and MCP stdio server concurrently — no subcommand needed
+- **Default mode**: `./bin/homelab-api` — starts **both** HTTP API (port 8080) and MCP stdio server concurrently via `errgroup`; used in Kubernetes
+- **MCP-only mode**: `./bin/homelab-api mcp` — starts MCP stdio server only, no HTTP port bound; used by VS Code / JetBrains IDE configurations
 - **Shared providers**: Device and service data accessed via `internal/homeassistant/devices.go` and `internal/services/provider.go` — used by both HTTP handlers and MCP handlers
 - **No data duplication**: MCP resources read from the same mock data stores as HTTP endpoints
-- **Graceful shutdown**: Both HTTP and MCP modes share a context cancelled on SIGINT/SIGTERM via errgroup
+- **Graceful shutdown**: Both modes share a context cancelled on SIGINT/SIGTERM; HTTP mode also runs a graceful shutdown goroutine
 - **MCP logging**: All MCP diagnostic output goes to stderr; stdout is reserved for JSON-RPC messages
 
 ## Documentation

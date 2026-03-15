@@ -5,7 +5,7 @@
 
 ## Summary
 
-Integrate a Model Context Protocol (MCP) server into the existing go-github home lab API application as a subcommand of the single binary. When invoked as `homelab-api mcp`, the application starts an MCP stdio server (using the `github.com/mark3labs/mcp-go` SDK) that exposes home lab data (devices, services, cluster services, health) as MCP resources, device control as an MCP tool, and AI interaction templates as MCP prompts. The MCP server reuses all existing domain logic via shared data providers extracted from HTTP handlers. No separate binary is produced.
+Integrate a Model Context Protocol (MCP) server into the existing go-github home lab API application so that **both the HTTP API server and the MCP stdio server run concurrently with a single command**. Running `./bin/homelab-api` launches both modes as goroutines under a shared `errgroup` context — no subcommand is needed. The MCP server (using the `github.com/mark3labs/mcp-go` SDK) exposes home lab data (devices, services, cluster services, health) as MCP resources, device control as an MCP tool, and AI interaction templates as MCP prompts. The MCP server reuses all existing domain logic via shared data providers extracted from HTTP handlers. No separate binary is produced.
 
 ## Technical Context
 
@@ -31,7 +31,7 @@ Integrate a Model Context Protocol (MCP) server into the existing go-github home
 | IV | **Observability** — log/slog, log levels, request ID, health endpoint | ✅ PASS | slog to stderr in MCP mode. Existing /health endpoint preserved. MCP health resource added. |
 | V | **Security & Configuration** — no hardcoded secrets, env vars, graceful shutdown | ✅ PASS | No secrets. Graceful shutdown on stdin close. SIGTERM/SIGINT handled. |
 | VI | **Build Requirements** — go.mod committed, Make targets, Docker, version info | ✅ PASS | go.mod updated with mcp-go. New Make targets added. Same binary. |
-| VII | **Code Organization** — /cmd, /internal, /pkg, /api, /tests | ✅ PASS | New code in internal/mcp/. Entry point in cmd/api/main.go (subcommand). |
+| VII | **Code Organization** — /cmd, /internal, /pkg, /api, /tests | ✅ PASS | New code in internal/mcp/. Entry point in cmd/api/main.go launches HTTP + MCP as concurrent goroutines via errgroup. |
 | VIII | **Dependency Management** — minimal deps, pinned versions, justified | ✅ PASS | One new dep: mcp-go. Justified: SDK handles MCP protocol complexity. |
 
 **Post-Phase-1 Re-check**: All gates still pass. No new violations introduced by the design.
@@ -57,7 +57,7 @@ specs/002-mcp-server/
 
 ```text
 cmd/api/
-└── main.go              # Modified: add "mcp" subcommand dispatch
+└── main.go              # Modified: launch HTTP + MCP as concurrent goroutines via errgroup (no subcommand)
 
 internal/mcp/            # NEW: MCP server package
 ├── server.go            # NewMCPServer(), registration, Run()
@@ -84,10 +84,10 @@ internal/handlers/       # MODIFIED: refactored to use shared providers
 .vscode/
 └── mcp.json             # NEW: Copilot MCP server configuration
 
-Makefile                 # MODIFIED: add mcp-build, mcp-run targets
+Makefile                 # MODIFIED: update build/run help entries to document dual-mode binary
 ```
 
-**Structure Decision**: Single project structure. MCP code lives in `internal/mcp/` alongside existing internal packages. Shared data providers are extracted from `internal/handlers/` into domain-specific packages (`internal/homeassistant/`, `internal/services/`). Entry point remains `cmd/api/main.go` with subcommand dispatch. No new top-level directories.
+**Structure Decision**: Single project structure. MCP code lives in `internal/mcp/` alongside existing internal packages. Shared data providers are extracted from `internal/handlers/` into domain-specific packages (`internal/homeassistant/`, `internal/services/`). Entry point remains `cmd/api/main.go`, modified to launch both the HTTP server and MCP server as concurrent goroutines under a shared `errgroup` context. A single `./bin/homelab-api` command starts both modes. No new top-level directories.
 
 ## Complexity Tracking
 

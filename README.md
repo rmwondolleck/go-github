@@ -5,23 +5,17 @@ A RESTful API service for managing and monitoring home lab infrastructure runnin
 [![Go Version](https://img.shields.io/badge/Go-1.25-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## 🚀 Current Status (March 2, 2026)
+## 🚀 Current Status (March 14, 2026)
 
-**Project Status**: 🚧 Active Development (~40% Complete)
+**Project Status**: ✅ Feature Complete — HTTP API + MCP Server
 
 ### Recent Updates
-- ✅ **Agent Dispatch Recovery Complete**: Successfully recovered from rate limiting, 11 Copilot agents now working on features
-- ✅ **3 PRs Ready to Merge**: Health endpoint, integration tests, and rate limiting middleware complete
-- 🚀 **11 Active Agents**: Working on services discovery, CORS, JSON optimization, TDD tests, and deployment
+- ✅ **MCP Server Integration Complete**: Full Model Context Protocol server integrated into the binary — both HTTP API and MCP stdio start with a single command
+- ✅ **Constitution Compliance**: Test coverage at 93.5% (target ≥80%), `gofmt` clean, `go vet` clean
+- ✅ **Performance Validated**: 100-goroutine load tests pass, P99 <300µs, no memory leaks
+- ✅ **Docker & Kubernetes Ready**: Distroless image at 34.1MB, K8s manifests with liveness/readiness probes
 
-### Quick Stats
-- **Merged PRs**: 3 ready for immediate merge (PRs #111, #113, #115)
-- **Active Work**: 11 agents dispatched and working in parallel
-- **Completed**: Phase 0, 1, 3 foundation work
-- **In Progress**: Phase 4 (Performance), Phase 5 (Device Control), Phase 6 (Cluster Services), Phase 8 (Deployment)
-- **Next Milestone**: Phase 2 (US1 - Device Management MVP)
-
-See [`MISSION_COMPLETE.md`](./MISSION_COMPLETE.md) for full status and [`AGENT_MONITORING_DASHBOARD.md`](./AGENT_MONITORING_DASHBOARD.md) to track active agents.
+See [`.github/docs/CURRENT_STATUS.md`](.github/docs/CURRENT_STATUS.md) for full status.
 
 ## 📋 Table of Contents
 
@@ -118,23 +112,22 @@ The Home Lab API Service is designed to provide a unified REST API for interacti
 - ✅ Structured logging with request tracing
 - ✅ Request ID generation and propagation
 - ✅ Panic recovery middleware
+- ✅ CORS middleware
 - ✅ Graceful shutdown (30s timeout)
 - ✅ Thread-safe server operations
 - ✅ Consistent error responses
-- ✅ CORS support preparation
-- ✅ Mocked HomeAssistant device data
+- ✅ Mocked HomeAssistant device data and control endpoints
+- ✅ Service discovery endpoint
+- ✅ Cluster services endpoint
 - ✅ Interactive API documentation with Swagger/OpenAPI
+- ✅ **MCP Server** — AI assistant integration via Model Context Protocol (resources, tools, prompts)
 
 ### Planned Features
 
-- 🔄 HomeAssistant device query endpoints
-- 🔄 HomeAssistant device control endpoints
-- 🔄 Service discovery endpoint
 - 🔄 Rate limiting
 - 🔄 Authentication/Authorization
-- 🔄 Live HomeAssistant integration
+- 🔄 Live HomeAssistant integration (replace mock data)
 - 🔄 Additional service integrations
-- 🔄 MCP tool wrappers
 
 ## 📚 API Documentation
 
@@ -210,7 +203,7 @@ Returns API version information.
 
 ---
 
-### HomeAssistant Endpoints (Planned)
+### HomeAssistant Endpoints
 
 **GET /api/v1/homeassistant/devices**
 
@@ -389,9 +382,14 @@ The `homelab-api` binary runs **both** the HTTP API server and an MCP (Model Con
 
 ### How It Works
 
-- **HTTP API** serves Kubernetes traffic on port 8080 (existing behaviour, unchanged)
-- **MCP stdio server** listens on `stdin`/`stdout` for local IDE clients (VS Code Copilot, JetBrains AI)
-- Both modes run as goroutines under a shared context and both shut down on `SIGINT`/`SIGTERM`
+The binary supports **three modes**:
+
+| Command | HTTP API | MCP stdio | Use case |
+|---|---|---|---|
+| `./bin/homelab-api` | ✅ port 8080 | ✅ stdin/stdout | Default / Kubernetes |
+| `./bin/homelab-api mcp` | ❌ | ✅ stdin/stdout | Local IDE / AI assistant |
+
+Both modes handle `SIGINT`/`SIGTERM` cleanly. In Kubernetes the MCP server runs but idles harmlessly (stdin is `/dev/null`).
 
 ### Build & Run
 
@@ -400,23 +398,18 @@ The `homelab-api` binary runs **both** the HTTP API server and an MCP (Model Con
 make build
 # or: go build -o bin/homelab-api ./cmd/api
 
-# Run — starts BOTH HTTP API and MCP stdio server
-make run
-# or: ./bin/homelab-api
-```
+# Mode 1 — default: starts BOTH HTTP API and MCP stdio concurrently
+./bin/homelab-api
 
-You will see two log lines confirming both modes are active:
-
-```
-{"level":"INFO","msg":"http server started","port":"8080"}
-{"level":"INFO","msg":"mcp server started","transport":"stdio"}
+# Mode 2 — MCP only: no HTTP port bound (what your IDE uses)
+./bin/homelab-api mcp
 ```
 
 ### MCP Quick Smoke Test
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1"}}}' \
-  | ./bin/homelab-api 2>/dev/null
+  | ./bin/homelab-api mcp 2>/dev/null
 ```
 
 Expected response contains `"name":"go-github-homelab"`.
@@ -430,13 +423,14 @@ The `.vscode/mcp.json` file is already included in the repository:
   "servers": {
     "go-github-homelab": {
       "type": "stdio",
-      "command": "${workspaceFolder}/bin/homelab-api"
+      "command": "${workspaceFolder}/bin/homelab-api",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-Open the Copilot chat panel, click the **MCP servers** button, and the `go-github-homelab` server will appear.
+VS Code spawns the binary in MCP-only mode (`mcp` arg) — no HTTP port is bound.
 
 ### JetBrains AI Configuration
 
@@ -446,8 +440,9 @@ In JetBrains IDEs (GoLand, IDEA, etc.) with the AI plugin:
 2. Click **+** to add a new server
 3. Set:
    - **Name**: `go-github-homelab`
-   - **Command**: path to `bin/homelab-api` (e.g. `/path/to/go-github/bin/homelab-api`)
-   - **Args**: *(leave empty)*
+   - **Command**: path to `bin/homelab-api`
+   - **Args**: `mcp`
+   - **Transport**: `stdio`
    - **Transport**: `stdio`
 
 ### Available Resources, Tools, and Prompts
@@ -624,13 +619,21 @@ All logs include:
 .
 ├── cmd/
 │   └── api/
-│       └── main.go              # Application entry point
+│       └── main.go              # Application entry point — launches HTTP API + MCP concurrently
 ├── internal/
 │   ├── handlers/                # HTTP handlers
 │   │   └── response.go          # Response helpers
 │   ├── health/                  # Health check service
 │   │   └── checker.go
-│   ├── homeassistant/           # HomeAssistant integration
+│   ├── homeassistant/           # HomeAssistant integration + shared device provider
+│   │   └── devices.go           # GetDevices(), GetDevice(), ExecuteCommand()
+│   ├── services/                # Shared service provider
+│   │   └── provider.go          # GetServices()
+│   ├── mcp/                     # MCP server (resources, tools, prompts)
+│   │   ├── server.go            # NewMCPServer(), Run()
+│   │   ├── resources.go         # Resource handlers (devices, services, cluster, health)
+│   │   ├── tools.go             # Tool handler (execute_command)
+│   │   └── prompts.go           # Prompt handlers (device_control, service_status)
 │   ├── cluster/                 # Cluster service integration
 │   ├── middleware/              # HTTP middleware
 │   │   ├── logging.go           # Request logging
@@ -647,19 +650,28 @@ All logs include:
 │   ├── integration/             # Integration tests
 │   └── verify_swagger.sh        # Swagger UI verification
 ├── deployments/
-│   ├── Dockerfile               # Docker image definition
+│   ├── Dockerfile               # Docker image definition (Alpine)
+│   ├── Dockerfile.distroless    # Docker image definition (Distroless, 34.1MB)
 │   ├── README.md                # Deployment documentation
 │   └── k8s/
 │       ├── deployment.yaml      # Kubernetes deployment
-│       ├── service.yaml         # Kubernetes service
 │       └── configmap.yaml       # Kubernetes config
 ├── api/                         # API documentation (Swagger)
-│   ├── docs.go                  # Generated Swagger docs (gitignored)
-│   ├── swagger.json             # Generated OpenAPI spec (gitignored)
-│   └── swagger.yaml             # Generated OpenAPI spec (gitignored)
+│   ├── docs.go                  # Generated Swagger docs
+│   ├── swagger.json             # Generated OpenAPI spec
+│   └── swagger.yaml             # Generated OpenAPI spec
+├── specs/                       # Feature specifications
+│   └── 002-mcp-server/          # MCP server feature spec, plan, tasks, contracts
 ├── research/                    # Research and benchmarks
 ├── .github/
-│   └── workflows/               # CI/CD workflows
+│   ├── agents/                  # Copilot agent instructions
+│   │   └── copilot-instructions.md
+│   ├── docs/                    # Project status and history documents
+│   │   └── CURRENT_STATUS.md
+│   ├── prompts/                 # speckit prompt templates
+│   └── workflows/               # CI/CD and agentic workflows
+├── .vscode/
+│   └── mcp.json                 # VS Code Copilot MCP server configuration
 ├── go.mod                       # Go module definition
 ├── go.sum                       # Go module checksums
 ├── Makefile                     # Build automation
@@ -730,6 +742,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**Project Status**: 🚧 In Development (POC Phase)
+**Project Status**: ✅ Feature Complete — HTTP API + MCP Server integrated
 
 For questions or issues, please open an issue on GitHub.

@@ -6,18 +6,18 @@
 
 ---
 
-## R1: Integrated Architecture — Single Binary with MCP Subcommand
+## R1: Integrated Architecture — Single Binary, Concurrent HTTP + MCP
 
-**Decision**: Use a single binary (`homelab-api`) with a subcommand/flag to select the mode of operation: `homelab-api` (default: HTTP API), `homelab-api mcp` (MCP stdio server). Both modes share the same codebase and compiled binary.
+**Decision**: Use a single binary (`homelab-api`) that starts **both** the HTTP API server and the MCP stdio server **concurrently** on every launch. Both modes run as goroutines under a shared `errgroup` context and shut down together on `SIGINT`/`SIGTERM`. No subcommand is required.
 
-**Rationale**: The user constraint is explicit: "the MCP server and API server should run on the same codebase/application — they should be integrated into a single application, not separate binaries." A subcommand approach satisfies this while keeping MCP's stdio requirement (stdin/stdout communication) separate from the HTTP server's port-based communication. Both modes are incompatible at runtime (HTTP writes to stdout for logs; MCP uses stdout for JSON-RPC), so they run as separate modes of the same binary.
+**Rationale**: The user constraint is explicit: "the MCP server and API server should run on the same codebase/application." A concurrent approach satisfies this fully while keeping the developer experience simple (one command, both modes active). The stdout conflict (HTTP logs vs MCP JSON-RPC output) is resolved by routing all non-MCP output — including HTTP server logs — to `stderr` via `log/slog`. Only MCP JSON-RPC messages go to `stdout`, preserving protocol correctness.
 
 **Alternatives Considered**:
 - **Separate `cmd/mcp/main.go` binary**: Rejected — violates the user constraint of a single application. Would require two build targets and two binaries.
-- **Concurrent HTTP + MCP in one process**: Rejected — MCP stdio requires exclusive control of stdout. Running an HTTP server simultaneously would corrupt MCP's JSON-RPC output stream.
-- **Environment variable mode selection** (`MODE=mcp`): Considered viable but less idiomatic than a subcommand. Subcommands are the standard Go pattern (e.g., `go build`, `go test`).
+- **Subcommand dispatch** (`homelab-api mcp`): Considered and prototyped. Rejected — unnecessarily splits a single logical server into two modes, complicates IDE configuration (args required), and makes k8s deployment reasoning harder. The stdout conflict is solvable without mode separation.
+- **Environment variable mode selection** (`MODE=mcp`): Rejected — does not allow both modes to run simultaneously; same drawbacks as subcommand.
 
-**Implementation**: Modify `cmd/api/main.go` to check `os.Args` for a `mcp` subcommand. If present, start the MCP stdio server instead of the HTTP server. The `internal/mcp/` package provides the server construction. All logs in MCP mode go to stderr.
+**Implementation**: Modify `cmd/api/main.go` to use `golang.org/x/sync/errgroup` to launch both `srv.Run(port)` (HTTP) and `internalmcp.Run(ctx)` (MCP) concurrently. All logs — from both modes — go to `stderr`. Only MCP JSON-RPC protocol messages go to `stdout`.
 
 ---
 
@@ -98,7 +98,7 @@ stdio.Listen(ctx, os.Stdin, os.Stdout)
 
 **Rationale**: MCP stdio transport requires stdout to be exclusively used for JSON-RPC communication. Any non-JSON-RPC output on stdout corrupts the protocol stream. The mcp-go SDK's `StdioServer` writes to the provided stdout writer and reads from stdin. Diagnostic logging must go to stderr.
 
-**Implementation**: Configure `slog` with a handler writing to `os.Stderr` when running in MCP mode. The SDK already handles JSON-RPC framing on stdout.
+**Implementation**: Configure `slog` with a handler writing to `os.Stderr` at startup. Both the HTTP server and the MCP server write all diagnostic logs to stderr. The SDK handles JSON-RPC framing on stdout exclusively.
 
 ---
 
@@ -118,26 +118,37 @@ stdio.Listen(ctx, os.Stdin, os.Stdout)
 
 ---
 
-## R6: Subcommand Implementation — Minimal Approach
+## R6: Concurrent Launch — errgroup Pattern
 
-**Decision**: Use simple `os.Args` inspection for subcommand detection rather than a CLI framework.
+**Decision**: Use `golang.org/x/sync/errgroup` to manage both the HTTP server and MCP server goroutines under a shared cancellable context.
 
-**Rationale**: The application has exactly two modes: default (HTTP API) and `mcp`. A full CLI framework (cobra, urfave/cli) adds unnecessary dependency weight for a binary choice. The constitution emphasises "minimal external dependencies."
+**Rationale**: `errgroup` propagates the first non-nil error from either goroutine to the caller and cancels the shared context, ensuring both modes shut down together. This is idiomatic Go for managing multiple concurrent long-running goroutines. No CLI framework is needed — `os.Args` is not inspected.
 
 **Implementation**:
 ```go
-func main() {
-    if len(os.Args) > 1 && os.Args[1] == "mcp" {
-        runMCP()
-        return
-    }
-    runHTTPServer()
-}
+g, gctx := errgroup.WithContext(ctx)
+
+g.Go(func() error {
+    slog.Info("http server started", "port", port)
+    return srv.Run(port)
+})
+
+g.Go(func() error {
+    slog.Info("mcp server started", "transport", "stdio")
+    return internalmcp.Run(gctx)
+})
+
+g.Go(func() error {
+    <-gctx.Done()
+    return srv.GracefulShutdown(shutdownCtx)
+})
+
+return g.Wait()
 ```
 
 **Alternatives Considered**:
-- **cobra/urfave/cli**: Rejected — overkill for a single subcommand. Constitution says "minimal external dependencies."
-- **Flag-based** (`--mode=mcp`): Viable but less readable. Subcommands are more discoverable.
+- **cobra/urfave/cli**: Rejected — overkill. Constitution says "minimal external dependencies."
+- **os.Args subcommand check**: Prototyped but rejected in favour of concurrent launch (see R1).
 
 ---
 
@@ -157,11 +168,11 @@ func main() {
 
 ## R8: Build Tooling — Makefile Targets
 
-**Decision**: Since MCP and HTTP share a single binary, adjust existing Makefile targets and add MCP-specific convenience targets.
+**Decision**: Since MCP and HTTP share a single binary and start together, no MCP-specific Makefile targets are needed. The existing `make build` and `make run` targets serve both modes.
 
-**New/Modified Targets**:
-- `make build` — builds `bin/homelab-api` (unchanged, same binary serves both modes)
-- `make mcp-run` — runs `bin/homelab-api mcp` (convenience target for MCP mode)
-- `make mcp-build` — alias for `make build` (for quickstart compatibility; outputs same binary)
+**Targets**:
+- `make build` — builds `bin/homelab-api` (unchanged; same binary serves both HTTP and MCP)
+- `make run` — runs `./bin/homelab-api`; starts HTTP API on port 8080 **and** MCP stdio server concurrently
+- `make test` — runs all tests including `internal/mcp/` package
 
-**Rationale**: The quickstart doc references `make mcp-build` and `make mcp-run`. Since it's a single binary, `mcp-build` is just an alias for `build`. The MCP configuration in `.vscode/mcp.json` will point to `bin/homelab-api` with args `["mcp"]`.
+**Rationale**: There is no separate MCP mode to invoke — both servers start automatically. Adding `mcp-run` or `mcp-build` aliases would imply a mode separation that does not exist and would confuse developers. The `.vscode/mcp.json` IDE configuration points to `bin/homelab-api` with **no args**.

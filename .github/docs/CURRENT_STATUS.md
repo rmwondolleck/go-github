@@ -1,94 +1,107 @@
 # Project Status Report - go-github
 
-**Date**: March 14, 2026  
+**Date**: March 15, 2026  
 **Repository**: https://github.com/rmwondolleck/go-github  
-**Branch**: `002-mcp-server`
+**Branch**: `main`
 
 ---
 
-## 🎉 Feature 002: MCP Server — COMPLETE
+## ✅ Feature 002: MCP Server — COMPLETE & ON MAIN
 
-**Completed**: March 14, 2026
+**Completed**: March 14–15, 2026
 
-The `002-mcp-server` feature has been fully implemented across all 42 tasks.
+The `homelab-api` binary runs **both** HTTP API and MCP stdio concurrently from a single command. All 42 implementation tasks complete. Code is live on `main`.
 
-### Summary of Changes
+### What's on main
 
-The `homelab-api` binary now runs **both** an HTTP API server and an MCP (Model Context
-Protocol) stdio server **concurrently** with a single command — no subcommand required.
-
-### What Was Built
-
-| Component | Files Created/Modified |
-|-----------|----------------------|
-| Shared device provider | `internal/homeassistant/devices.go` + `devices_test.go` |
-| Shared services provider | `internal/services/provider.go` + `provider_test.go` |
+| Component | Location |
+|---|---|
+| MCP server core | `internal/mcp/server.go` + tests |
+| MCP resource handlers | `internal/mcp/resources.go` + tests |
+| MCP tool handler | `internal/mcp/tools.go` + tests |
+| MCP prompt handlers | `internal/mcp/prompts.go` + tests |
+| Shared device provider | `internal/homeassistant/devices.go` + tests |
+| Shared services provider | `internal/services/provider.go` + tests |
 | HTTP handler refactors | `internal/handlers/homeassistant.go`, `services.go` |
-| MCP server core | `internal/mcp/server.go` |
-| MCP resource handlers | `internal/mcp/resources.go` + `resources_test.go` |
-| MCP tool handler | `internal/mcp/tools.go` + `tools_test.go` |
-| MCP prompt handlers | `internal/mcp/prompts.go` + `prompts_test.go` |
-| MCP server tests | `internal/mcp/server_test.go` |
-| Binary dispatch (dual-mode) | `cmd/api/main.go` — default: HTTP+MCP concurrent; `mcp` arg: MCP-only |
+| Binary dispatch (dual-mode) | `cmd/api/main.go` — errgroup + `mcp` arg |
 | IDE config | `.vscode/mcp.json` |
-| Documentation | `README.md`, `Makefile` |
-| Dependencies | `go.mod`, `go.sum` (`github.com/mark3labs/mcp-go v0.45.0`) |
+| Dependency | `github.com/mark3labs/mcp-go v0.45.0` |
+
+### Launch Modes
+
+```bash
+./bin/homelab-api       # HTTP :8080 + MCP stdio (default / k8s)
+./bin/homelab-api mcp   # MCP stdio only (IDE / local dev)
+```
 
 ### Test Results
 
 | Package | Coverage |
-|---------|----------|
+|---|---|
+| `internal/mcp` | **83.8%** ✅ |
 | `internal/homeassistant` | 100% |
 | `internal/services` | 100% |
-| `internal/mcp` | **83.8%** ✅ (target: ≥80%) |
-| `internal/handlers` | 47.1% |
-| `internal/cluster` | 100% |
-| `internal/health` | 76.5% |
 | `internal/middleware` | 100% |
 | `internal/server` | 100% |
-
-All existing tests continue to pass. Zero `go vet` issues.
-
-### Quick Start
-
-```bash
-# Build
-make build
-
-# Mode 1 — default: HTTP API (port 8080) + MCP stdio concurrently
-./bin/homelab-api
-
-# Mode 2 — MCP-only: no HTTP port bound (IDE / local AI use)
-./bin/homelab-api mcp
-
-# Smoke test
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1"}}}' | ./bin/homelab-api mcp 2>/dev/null
-```
-
-### Branch Ready for Review
-
-The `002-mcp-server` branch is ready for PR and code review.
+| `internal/cluster` | 100% |
+| `internal/health` | 76.5% |
+| `internal/handlers` | 47.1% |
 
 ---
 
-## Open Items
+## Open Items (March 15, 2026)
 
 | # | Area | Description |
-|---|------|-------------|
-| PR #178 | Compliance | Constitution compliance check — 93.5% coverage, gofmt fixes. Awaiting merge to `main`. |
-| PR #177 | Performance | pprof profiling report. Awaiting merge to `main`. |
-| PR #176 | Coverage | Coverage bump to 96.1%. Awaiting merge to `main`. |
-| PR #175 | Testing | Full integration test suite report. Awaiting merge to `main`. |
-| PR #174 | Docker | Docker build validation. Awaiting merge to `main`. |
-| Issue #37 | Middleware | Rate limiting not yet implemented. |
-| Issue #41 | Router | Middleware router integration not yet complete. |
+|---|---|---|
+| **PR #192** | Router | T044: Wire RateLimit to `/api/v1/*` — Copilot draft, awaiting review |
+| **PR pending** | Middleware | T040: Rate limiting implementation — Copilot working |
 
 ---
 
-## Archive: Pre-002 Status Snapshot (March 1, 2026)
+## Merged March 15, 2026
 
-> The content below is a historical snapshot from March 1, 2026. It describes the project
-> state before the 002-mcp-server feature was implemented. It is preserved for reference only
-> and does not reflect the current project state.
+| PR | Description |
+|---|---|
+| #191 | fix(workflows): prevent Issue Worker Agent infinite activation loop |
+| #190 | fix(workflows): break PR Integration Agent feedback loop |
+| #189 | fix(workflows): guard PR Integration Agent against empty-patch failure |
 
 ---
+
+## Merged March 14–15, 2026 (Epic + Feature)
+
+| PR | Description |
+|---|---|
+| #185 | 002-mcp-server spec, plan, docs |
+| #184 (epic) | Constitution compliance, coverage 96.1%, perf report, test report, Docker validation |
+| #183 | Earlier 002-mcp-server spec iteration |
+| #166 (epic) | CORS, services endpoint, jsoniter, response pooling, TDD tests, Dockerfiles |
+
+---
+
+## Closed Issues (Completed)
+
+| # | Title |
+|---|---|
+| #179 | MCP Server integration ✅ |
+| #68 | T094: Constitution compliance ✅ |
+| #65 | T091: Performance profiling ✅ |
+| #64 | T090: Integration test suite ✅ |
+| #62 | T084: Docker build test ✅ |
+| #56 | T072: Coverage check ✅ |
+| #34 | T033: Health endpoint handler ✅ |
+| #32 | T031: Health endpoint tests ✅ |
+
+---
+
+## Notes on Branch Hygiene
+
+The `002-mcp-server` local branch diverged from its remote due to `speckit.implement`
+committing directly to the local branch while the remote received changes via PR merges.
+The MCP implementation code reached `main` correctly via PR #185. The local branch
+can be deleted — all work is on `main`.
+
+```bash
+git branch -D 002-mcp-server
+git push origin --delete 002-mcp-server
+```

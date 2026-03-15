@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"go-github/internal/homeassistant"
 	"go-github/internal/models"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,34 +46,13 @@ func DeviceListHandler(c *gin.Context) {
 	resp := getResponseFromPool()
 	defer putResponseInPool(resp)
 
-	// In a real implementation, this would fetch devices from a data store
-	// For now, we'll return an empty list or sample data
-	// The pool will still be used when this handler is called
+	devices := homeassistant.GetDevices()
+	for _, d := range devices {
+		resp.Devices = append(resp.Devices, *d)
+	}
 
 	resp.Count = len(resp.Devices)
 	JSONSuccess(c, http.StatusOK, resp)
-}
-
-// mockDevices provides mock device data for command handling
-var mockDevices = map[string]*models.Device{
-	"device-001": {
-		ID:           "device-001",
-		Name:         "Living Room Light",
-		Type:         "light",
-		State:        "off",
-		Attributes:   map[string]interface{}{"brightness": 0},
-		LastUpdated:  time.Now(),
-		Controllable: true,
-	},
-	"readonly-sensor-001": {
-		ID:           "readonly-sensor-001",
-		Name:         "Temperature Sensor",
-		Type:         "sensor",
-		State:        "72",
-		Attributes:   map[string]interface{}{"unit": "°F"},
-		LastUpdated:  time.Now(),
-		Controllable: false,
-	},
 }
 
 // ExecuteCommandHandler godoc
@@ -105,23 +84,24 @@ func ExecuteCommandHandler(c *gin.Context) {
 		return
 	}
 
-	// Look up device
-	device, exists := mockDevices[deviceID]
-	if !exists {
-		JSONError(c, http.StatusNotFound, "not_found", "device not found: "+deviceID)
-		return
-	}
-
-	// Check if device is controllable
-	if !device.Controllable {
-		JSONError(c, http.StatusMethodNotAllowed, "method_not_allowed", "device is not controllable: "+deviceID)
+	// Execute command via homeassistant package
+	result, err := homeassistant.ExecuteCommand(deviceID, cmd)
+	if err != nil {
+		switch {
+		case errors.Is(err, homeassistant.ErrDeviceNotFound):
+			JSONError(c, http.StatusNotFound, "not_found", "device not found: "+deviceID)
+		case errors.Is(err, homeassistant.ErrDeviceNotControllable):
+			JSONError(c, http.StatusMethodNotAllowed, "method_not_allowed", "device is not controllable: "+deviceID)
+		default:
+			JSONError(c, http.StatusInternalServerError, "internal_error", err.Error())
+		}
 		return
 	}
 
 	// Command executed successfully
 	JSONSuccess(c, http.StatusOK, gin.H{
-		"status":    "success",
-		"device_id": deviceID,
-		"action":    cmd.Action,
+		"status":    result.Status,
+		"device_id": result.DeviceID,
+		"action":    result.Action,
 	})
 }

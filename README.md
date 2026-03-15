@@ -383,6 +383,87 @@ curl http://localhost:8080/health
 open http://localhost:8080/api/docs/index.html
 ```
 
+## 🤖 MCP Server (AI Assistant Integration)
+
+The `homelab-api` binary runs **both** the HTTP API server and an MCP (Model Context Protocol) stdio server **concurrently** with a single command. No subcommand is needed — just run the binary and both modes start automatically.
+
+### How It Works
+
+- **HTTP API** serves Kubernetes traffic on port 8080 (existing behaviour, unchanged)
+- **MCP stdio server** listens on `stdin`/`stdout` for local IDE clients (VS Code Copilot, JetBrains AI)
+- Both modes run as goroutines under a shared context and both shut down on `SIGINT`/`SIGTERM`
+
+### Build & Run
+
+```bash
+# Build the dual-mode binary
+make build
+# or: go build -o bin/homelab-api ./cmd/api
+
+# Run — starts BOTH HTTP API and MCP stdio server
+make run
+# or: ./bin/homelab-api
+```
+
+You will see two log lines confirming both modes are active:
+
+```
+{"level":"INFO","msg":"http server started","port":"8080"}
+{"level":"INFO","msg":"mcp server started","transport":"stdio"}
+```
+
+### MCP Quick Smoke Test
+
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1"}}}' \
+  | ./bin/homelab-api 2>/dev/null
+```
+
+Expected response contains `"name":"go-github-homelab"`.
+
+### VS Code Copilot Configuration
+
+The `.vscode/mcp.json` file is already included in the repository:
+
+```json
+{
+  "servers": {
+    "go-github-homelab": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/bin/homelab-api"
+    }
+  }
+}
+```
+
+Open the Copilot chat panel, click the **MCP servers** button, and the `go-github-homelab` server will appear.
+
+### JetBrains AI Configuration
+
+In JetBrains IDEs (GoLand, IDEA, etc.) with the AI plugin:
+
+1. Open **Settings → Tools → AI Assistant → MCP Servers**
+2. Click **+** to add a new server
+3. Set:
+   - **Name**: `go-github-homelab`
+   - **Command**: path to `bin/homelab-api` (e.g. `/path/to/go-github/bin/homelab-api`)
+   - **Args**: *(leave empty)*
+   - **Transport**: `stdio`
+
+### Available Resources, Tools, and Prompts
+
+| Type | Name | URI / Description |
+|------|------|-------------------|
+| Resource | Devices | `homelab://devices` — all HA smart home devices |
+| Resource | Services | `homelab://services` — homelab services (prometheus, grafana, etc.) |
+| Resource | Cluster Services | `homelab://cluster/services` — Kubernetes cluster services |
+| Resource | Health | `homelab://health` — API health and uptime |
+| Tool | execute_command | Execute a control command on a device (`device_id`, `action`) |
+| Prompt | device_control | Rendered prompt for controlling a named device |
+| Prompt | service_status | Rendered prompt for checking a service's status |
+
+---
+
 ## 🧪 Testing
 
 ### Run All Tests

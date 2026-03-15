@@ -3,14 +3,16 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	_ "go-github/api" // Import generated docs
+	internalmcp "go-github/internal/mcp"
 	"go-github/internal/server"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // @title Home Lab API
@@ -36,32 +38,47 @@ func main() {
 		port = "8080"
 	}
 
+	// Create a shared context that is cancelled on SIGINT/SIGTERM.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	srv := server.New()
 
-	// Start server in a goroutine
-	go func() {
-		if err := srv.Run(port); err != nil && err != http.ErrServerClosed {
-			slog.Error("server error", "error", err)
+	g, gctx := errgroup.WithContext(ctx)
+
+	// Launch HTTP server goroutine.
+	g.Go(func() error {
+		slog.Info("http server started", "port", port)
+		if err := srv.Run(port); err != nil {
+			return err
 		}
-	}()
+		return nil
+	})
 
-	slog.Info("server started", "port", port)
+	// Launch MCP stdio server goroutine.
+	g.Go(func() error {
+		slog.Info("mcp server started", "transport", "stdio")
+		return internalmcp.Run(gctx)
+	})
 
-	// Wait for interrupt signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	// Goroutine to trigger graceful HTTP shutdown when context is done.
+	g.Go(func() error {
+		<-gctx.Done()
 
-	slog.Info("shutting down server...")
+		slog.Info("shutting down servers...")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
 
-	// Graceful shutdown with 30s timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+		if err := srv.GracefulShutdown(shutdownCtx); err != nil {
+			slog.Error("http shutdown error", "error", err)
+		}
+		return nil
+	})
 
-	if err := srv.GracefulShutdown(ctx); err != nil {
-		slog.Error("shutdown error", "error", err)
+	if err := g.Wait(); err != nil {
+		slog.Error("server error", "error", err)
 		os.Exit(1)
 	}
 
-	slog.Info("server stopped gracefully")
+	slog.Info("all servers stopped gracefully")
 }

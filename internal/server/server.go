@@ -33,8 +33,9 @@ func New() *Server {
 	// Health endpoint
 	router.GET("/health", healthHandler)
 
-	// API v1 routes group
+	// API v1 routes group — rate limiting applied here only
 	v1 := router.Group("/api/v1")
+	v1.Use(middleware.RateLimit())
 	{
 		// Placeholder for API routes
 		v1.GET("", apiRootHandler)

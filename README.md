@@ -4,6 +4,8 @@ A RESTful API service for managing and monitoring home lab infrastructure runnin
 
 [![Go Version](https://img.shields.io/badge/Go-1.25-blue.svg)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Coverage](https://img.shields.io/badge/coverage-96.1%25-brightgreen.svg)](COVERAGE_REPORT.md)
+[![Constitution Compliance](https://img.shields.io/badge/compliance-passing-brightgreen.svg)](COMPLIANCE_REPORT.md)
 
 ## 🚀 Current Status (March 14, 2026)
 
@@ -16,6 +18,20 @@ A RESTful API service for managing and monitoring home lab infrastructure runnin
 - ✅ **Docker & Kubernetes Ready**: Distroless image at 34.1MB, K8s manifests with liveness/readiness probes
 
 See [`.github/docs/CURRENT_STATUS.md`](.github/docs/CURRENT_STATUS.md) for full status.
+
+## ✅ Constitution Compliance
+
+All project requirements have been validated. See [COMPLIANCE_REPORT.md](./COMPLIANCE_REPORT.md) for full details.
+
+| Requirement | Status |
+|-------------|--------|
+| Go 1.24+ standards | ✅ Go 1.25 |
+| 80%+ test coverage | ✅ 93.5% |
+| All errors handled | ✅ Structured error responses |
+| Structured logging | ✅ `log/slog` used throughout |
+| Graceful shutdown | ✅ OS signal handling with 5s timeout |
+| Code formatting | ✅ `gofmt` clean |
+| Lints passing | ✅ `go vet` clean |
 
 ## 📋 Table of Contents
 
@@ -460,6 +476,20 @@ In JetBrains IDEs (GoLand, IDEA, etc.) with the AI plugin:
 ---
 
 ## 🧪 Testing
+
+### Coverage Summary
+
+| Package | Coverage |
+|---------|----------|
+| `internal/cluster` | 100.0% |
+| `internal/handlers` | 87.8% |
+| `internal/health` | 100.0% |
+| `internal/homeassistant` | 100.0% |
+| `internal/middleware` | 100.0% |
+| `internal/server` | 100.0% |
+| **Total** | **96.1%** ✅ |
+
+> ✅ Coverage exceeds the 80% target. See [COVERAGE_REPORT.md](COVERAGE_REPORT.md) for the full report.
 
 ### Run All Tests
 

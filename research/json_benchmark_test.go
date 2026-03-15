@@ -172,9 +172,9 @@ func generateTestAPIResponse() interface{} {
 				Type:  "light",
 				State: "on",
 				Attributes: map[string]interface{}{
-					"brightness":           200,
-					"friendly_name":        "Living Room Light",
-					"supported_features":   1,
+					"brightness":         200,
+					"friendly_name":      "Living Room Light",
+					"supported_features": 1,
 				},
 				LastUpdated:  time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC),
 				Controllable: true,

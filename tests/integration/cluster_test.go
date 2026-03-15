@@ -165,7 +165,7 @@ func TestListClusterServices_InvalidFilters(t *testing.T) {
 		{
 			name:           "SQL injection attempt in name filter",
 			queryParam:     "?name=%27%20OR%20%271%27%3D%271", // URL encoded: ' OR '1'='1
-			expectedStatus: http.StatusOK,                      // Should treat as literal string filter
+			expectedStatus: http.StatusOK,                     // Should treat as literal string filter
 			expectedError:  "",
 		},
 	}
@@ -190,7 +190,7 @@ func TestListClusterServices_InvalidFilters(t *testing.T) {
 				assert.NoError(t, err, "Error response should be valid JSON")
 				assert.NotEmpty(t, errResponse.Error, "Error field should not be empty")
 				assert.NotEmpty(t, errResponse.Message, "Message field should not be empty")
-				
+
 				if tt.expectedError != "" {
 					assert.Contains(t, errResponse.Error, tt.expectedError, "Error should contain expected message")
 				}
@@ -229,7 +229,7 @@ func TestListClusterServices_ResponseStructure(t *testing.T) {
 	// If we have services in the response, validate the structure
 	if len(response) > 0 {
 		firstService := response[0]
-		
+
 		// Validate required fields are present
 		assert.NotEmpty(t, firstService.Name, "Service name should not be empty")
 		assert.NotEmpty(t, firstService.Namespace, "Service namespace should not be empty")
@@ -280,7 +280,7 @@ func TestListClusterServices_ConcurrentRequests(t *testing.T) {
 	for i := 0; i < concurrentRequests; i++ {
 		err := <-errChan
 		status := <-statusChan
-		
+
 		assert.NoError(t, err, "Concurrent request should not produce JSON parsing errors")
 		statuses = append(statuses, status)
 	}

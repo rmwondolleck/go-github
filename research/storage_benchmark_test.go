@@ -88,7 +88,7 @@ func BenchmarkSyncMap_ConcurrentReads(b *testing.B) {
 	storage := &SyncMapStorage{}
 	setupStorage(storage, 50)
 	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
-	
+
 	b.ResetTimer()
 	// RunParallel automatically uses GOMAXPROCS goroutines
 	// Each goroutine will run the body function b.N/GOMAXPROCS times
@@ -111,7 +111,7 @@ func BenchmarkRWMutex_ConcurrentReads(b *testing.B) {
 	storage := NewRWMutexStorage()
 	setupStorage(storage, 50)
 	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
-	
+
 	b.ResetTimer()
 	// RunParallel automatically uses GOMAXPROCS goroutines
 	// Each goroutine will run the body function b.N/GOMAXPROCS times
@@ -135,7 +135,7 @@ func BenchmarkSyncMap_MixedWorkload(b *testing.B) {
 	setupStorage(storage, 50)
 	devices := generateTestDevices(50)
 	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
@@ -164,7 +164,7 @@ func BenchmarkRWMutex_MixedWorkload(b *testing.B) {
 	setupStorage(storage, 50)
 	devices := generateTestDevices(50)
 	deviceTypes := []string{"light", "sensor", "switch", "binary_sensor"}
-	
+
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
@@ -190,7 +190,7 @@ func BenchmarkRWMutex_MixedWorkload(b *testing.B) {
 func BenchmarkSyncMap_LoadAll(b *testing.B) {
 	storage := &SyncMapStorage{}
 	setupStorage(storage, 50)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		storage.LoadAll()
@@ -201,7 +201,7 @@ func BenchmarkSyncMap_LoadAll(b *testing.B) {
 func BenchmarkRWMutex_LoadAll(b *testing.B) {
 	storage := NewRWMutexStorage()
 	setupStorage(storage, 50)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		storage.LoadAll()
@@ -214,12 +214,12 @@ func BenchmarkRWMutex_LoadAll(b *testing.B) {
 // BenchmarkSyncMap_SingleLookup validates O(1) lookup performance
 func BenchmarkSyncMap_SingleLookup(b *testing.B) {
 	sizes := []int{100, 1000, 10000}
-	
+
 	for _, size := range sizes {
 		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
 			storage := &SyncMapStorage{}
 			setupStorage(storage, size)
-			
+
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				// Always lookup the same device to test pure lookup time
@@ -232,12 +232,12 @@ func BenchmarkSyncMap_SingleLookup(b *testing.B) {
 // BenchmarkRWMutex_SingleLookup validates O(1) lookup performance
 func BenchmarkRWMutex_SingleLookup(b *testing.B) {
 	sizes := []int{100, 1000, 10000}
-	
+
 	for _, size := range sizes {
 		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
 			storage := NewRWMutexStorage()
 			setupStorage(storage, size)
-			
+
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				// Always lookup the same device to test pure lookup time
@@ -263,7 +263,7 @@ type DeviceListResponse struct {
 func BenchmarkDeviceListWithoutPool(b *testing.B) {
 	storage := NewRWMutexStorage()
 	setupStorage(storage, 50)
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -271,7 +271,7 @@ func BenchmarkDeviceListWithoutPool(b *testing.B) {
 		resp := &DeviceListResponse{
 			Devices: make([]Device, 0, 50),
 		}
-		
+
 		// Manually populate devices to show allocation difference
 		devices := storage.LoadAll()
 		for _, d := range devices {
@@ -293,7 +293,7 @@ func BenchmarkDeviceListWithoutPool(b *testing.B) {
 func BenchmarkDeviceListWithPool(b *testing.B) {
 	storage := NewRWMutexStorage()
 	setupStorage(storage, 50)
-	
+
 	// Create pool for DeviceListResponse
 	responsePool := sync.Pool{
 		New: func() interface{} {
@@ -302,20 +302,20 @@ func BenchmarkDeviceListWithPool(b *testing.B) {
 			}
 		},
 	}
-	
+
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		// Get response from pool (reuses object, saves allocation)
 		resp := responsePool.Get().(*DeviceListResponse)
-		
+
 		// Manually populate devices
 		devices := storage.LoadAll()
 		for _, d := range devices {
 			resp.Devices = append(resp.Devices, d)
 		}
 		resp.Count = len(resp.Devices)
-		
+
 		// Reset and return to pool
 		resp.Devices = resp.Devices[:0]
 		resp.Count = 0

@@ -12,7 +12,7 @@ import (
 
 func TestDeviceListHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	
+
 	tests := []struct {
 		name           string
 		expectedStatus int
@@ -38,31 +38,31 @@ func TestDeviceListHandler(t *testing.T) {
 
 func TestGetResponseFromPool(t *testing.T) {
 	resp := getResponseFromPool()
-	
+
 	assert.NotNil(t, resp)
 	assert.NotNil(t, resp.Devices)
 	assert.Equal(t, 0, len(resp.Devices))
 	assert.GreaterOrEqual(t, cap(resp.Devices), 50, "should have capacity for at least 50 devices")
-	
+
 	// Return to pool for cleanup
 	putResponseInPool(resp)
 }
 
 func TestPutResponseInPool(t *testing.T) {
 	resp := getResponseFromPool()
-	
+
 	// Simulate usage
 	resp.Count = 10
 	resp.Devices = append(resp.Devices, make([]models.Device, 10)...)
-	
+
 	// Return to pool
 	putResponseInPool(resp)
-	
+
 	// Get again and verify it was reset
 	resp2 := getResponseFromPool()
 	assert.Equal(t, 0, resp2.Count)
 	assert.Equal(t, 0, len(resp2.Devices))
-	
+
 	// Cleanup
 	putResponseInPool(resp2)
 }

@@ -52,6 +52,9 @@ Process all open PRs in the repository and create a consolidated integration bra
 - `epic-integration`
 - `ready-for-integration`
 
+**Exit silently (do not call noop or any tool)** if:
+- The triggering issue has the `agentic-workflows` label (these are system tracking issues; processing them would create a feedback loop)
+
 **Skip and exit with noop** if:
 - The label is anything other than `epic-integration` or `ready-for-integration`
 - There are fewer than 2 open PRs to integrate

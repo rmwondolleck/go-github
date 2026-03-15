@@ -79,15 +79,39 @@ You should see a JSON response with `serverInfo.name` = `"go-github-homelab"`.
 
 ### JetBrains (GoLand / IntelliJ)
 
-1. Build the binary: `make build`
-2. Open Settings → Tools → AI Assistant → MCP Servers
-3. Click **Add** (+) and configure:
-   - **Name**: `go-github-homelab`
-   - **Command**: `./bin/homelab-api` (relative to project root)
-   - **Args**: `mcp`
-   - **Transport**: stdio
-4. Click **OK** and restart the AI Assistant
-5. Open the AI Assistant chat and ask: *"What services are running in my home lab?"*
+GitHub Copilot in JetBrains reads MCP server configuration from a JSON file on disk.
+
+**Config file location**:
+```
+# Windows
+%LOCALAPPDATA%\github-copilot\intellij\mcp.json
+# e.g. C:\Users\<you>\AppData\Local\github-copilot\intellij\mcp.json
+
+# macOS
+~/Library/Application Support/github-copilot/intellij/mcp.json
+
+# Linux
+~/.config/github-copilot/intellij/mcp.json
+```
+
+Add the `go-github-homelab` entry to your `mcp.json`:
+
+```json
+{
+  "servers": {
+    "go-github-homelab": {
+      "type": "stdio",
+      "command": "C:/Users/<you>/GolandProjects/go-github/bin/homelab-api",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+> Use the **absolute path** to the binary — JetBrains does not resolve `${workspaceFolder}`.  
+> Restart the IDE (or reload the AI Assistant plugin) after saving the file.
+
+Once connected, open the Copilot chat and ask: *"What services are running in my home lab?"*
 
 ## Run Tests
 
@@ -155,7 +179,7 @@ Once connected, ask your AI assistant:
 
 ### Copilot doesn't see the MCP server
 - **VS Code**: Check `.vscode/mcp.json` exists, binary path is correct, and `args` contains `["mcp"]`
-- **JetBrains**: Verify the MCP server entry in Settings → Tools → AI Assistant → MCP Servers; ensure Args is `mcp`
+- **JetBrains**: Check `%LOCALAPPDATA%\github-copilot\intellij\mcp.json` (Windows) or `~/Library/Application Support/github-copilot/intellij/mcp.json` (macOS) — ensure the `go-github-homelab` entry exists, `type` is `stdio`, and `command` is the **absolute path** to the binary with `args: ["mcp"]`. Restart the IDE after any change.
 - Check stderr output: run `./bin/homelab-api mcp 2>mcp-debug.log` and inspect `mcp-debug.log`
 
 ### No response from server

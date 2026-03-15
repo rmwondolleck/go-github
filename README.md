@@ -450,15 +450,28 @@ VS Code spawns the binary in MCP-only mode (`mcp` arg) — no HTTP port is bound
 
 ### JetBrains AI Configuration
 
-In JetBrains IDEs (GoLand, IDEA, etc.) with the AI plugin:
+GitHub Copilot in JetBrains reads MCP configuration from a file on disk — no Settings UI needed.
 
-1. Open **Settings → Tools → AI Assistant → MCP Servers**
-2. Click **+** to add a new server
-3. Set:
-   - **Name**: `go-github-homelab`
-   - **Command**: path to `bin/homelab-api`
-   - **Args**: `mcp`
-   - **Transport**: `stdio`
+**Config file location**:
+- **Windows**: `%LOCALAPPDATA%\github-copilot\intellij\mcp.json`
+- **macOS**: `~/Library/Application Support/github-copilot/intellij/mcp.json`
+- **Linux**: `~/.config/github-copilot/intellij/mcp.json`
+
+Add the `go-github-homelab` entry (use the **absolute path** to the binary):
+
+```json
+{
+  "servers": {
+    "go-github-homelab": {
+      "type": "stdio",
+      "command": "C:/Users/<you>/GolandProjects/go-github/bin/homelab-api",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+Restart the IDE after saving. JetBrains does not support `${workspaceFolder}` — use an absolute path.
    - **Transport**: `stdio`
 
 ### Available Resources, Tools, and Prompts

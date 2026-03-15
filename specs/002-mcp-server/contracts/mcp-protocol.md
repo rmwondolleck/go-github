@@ -425,9 +425,25 @@
 
 > Uses `mcp` arg — MCP-only mode. The IDE gets a clean stdio pipe with no HTTP server binding port 8080.
 
-### JetBrains (Manual Configuration)
+### JetBrains (GoLand / IntelliJ)
 
-- **Name**: `go-github-homelab`
-- **Command**: `./bin/homelab-api`
-- **Args**: `mcp`
-- **Transport**: stdio
+GitHub Copilot in JetBrains reads MCP configuration from a file — not the Settings UI.
+
+**Config file**:
+- Windows: `%LOCALAPPDATA%\github-copilot\intellij\mcp.json`
+- macOS: `~/Library/Application Support/github-copilot/intellij/mcp.json`
+- Linux: `~/.config/github-copilot/intellij/mcp.json`
+
+```json
+{
+  "servers": {
+    "go-github-homelab": {
+      "type": "stdio",
+      "command": "C:/Users/<you>/GolandProjects/go-github/bin/homelab-api",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+> Use the **absolute path** — JetBrains does not resolve `${workspaceFolder}`. Restart the IDE after saving.

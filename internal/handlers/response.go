@@ -43,15 +43,15 @@ func JSONError(c *gin.Context, code int, err string, message string) {
 
 // NotFound sends a 404 Not Found error response
 func NotFound(c *gin.Context, message string) {
-JSONError(c, http.StatusNotFound, "not_found", message)
+	JSONError(c, http.StatusNotFound, "not_found", message)
 }
 
 // BadRequest sends a 400 Bad Request error response
 func BadRequest(c *gin.Context, message string) {
-JSONError(c, http.StatusBadRequest, "bad_request", message)
+	JSONError(c, http.StatusBadRequest, "bad_request", message)
 }
 
 // InternalError sends a 500 Internal Server Error response
 func InternalError(c *gin.Context, message string) {
-JSONError(c, http.StatusInternalServerError, "internal_error", message)
+	JSONError(c, http.StatusInternalServerError, "internal_error", message)
 }

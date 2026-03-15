@@ -1,6 +1,8 @@
 package health
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -23,7 +25,7 @@ func TestCheck_ReturnsHealthyStatus(t *testing.T) {
 func TestCheck_IncludesUptimeInResponse(t *testing.T) {
 	// Arrange
 	checker := NewChecker()
-	
+
 	// Give the service a moment to establish uptime
 	time.Sleep(10 * time.Millisecond)
 
@@ -121,4 +123,71 @@ func TestNewChecker_InitializesCorrectly(t *testing.T) {
 	if status.Status == "" {
 		t.Error("expected newly created checker to return valid status")
 	}
+}
+
+// TestFormatUptime_AllBranches tests every branch in formatUptime
+func TestFormatUptime_AllBranches(t *testing.T) {
+tests := []struct {
+name     string
+duration time.Duration
+want     func(string) bool
+}{
+{
+name:     "days branch",
+duration: 25*time.Hour + 3*time.Minute + 4*time.Second,
+want: func(s string) bool {
+return strings.Contains(s, "d") && strings.Contains(s, "h")
+},
+},
+{
+name:     "hours branch",
+duration: 2*time.Hour + 30*time.Minute + 15*time.Second,
+want: func(s string) bool {
+return strings.HasPrefix(s, "2h")
+},
+},
+{
+name:     "minutes branch",
+duration: 5*time.Minute + 10*time.Second,
+want: func(s string) bool {
+return strings.HasPrefix(s, "5m")
+},
+},
+{
+name:     "seconds branch",
+duration: 45 * time.Second,
+want: func(s string) bool {
+return strings.HasSuffix(s, "s") && !strings.Contains(s, "m")
+},
+},
+{
+name:     "milliseconds branch",
+duration: 500 * time.Millisecond,
+want: func(s string) bool {
+return strings.HasSuffix(s, "ms")
+},
+},
+}
+
+for _, tt := range tests {
+t.Run(tt.name, func(t *testing.T) {
+result := formatUptime(tt.duration)
+if !tt.want(result) {
+t.Errorf("formatUptime(%v) = %q, did not match expected pattern", tt.duration, result)
+}
+if result == "" {
+t.Error("formatUptime should never return empty string")
+}
+})
+}
+}
+
+// TestFormatUptime_DaysFormat verifies exact format for multi-day uptime
+func TestFormatUptime_DaysFormat(t *testing.T) {
+d := 2*24*time.Hour + 3*time.Hour + 4*time.Minute + 5*time.Second
+result := formatUptime(d)
+expected := fmt.Sprintf("%dd %dh %dm %ds", 2, 3, 4, 5)
+if result != expected {
+t.Errorf("expected %q, got %q", expected, result)
+}
 }

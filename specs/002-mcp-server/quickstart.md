@@ -162,7 +162,7 @@ internal/services/
 Once connected, ask your AI assistant:
 
 | Question | What Happens |
-|----------|-------------|
+|----------|--------------|
 | *"What devices are in my home lab?"* | Reads `homelab://devices` resource |
 | *"What services are running?"* | Reads `homelab://services` resource |
 | *"Show me the cluster services"* | Reads `homelab://cluster/services` resource |
@@ -192,6 +192,5 @@ Once connected, ask your AI assistant:
 This feature adds one new dependency:
 
 | Package | Purpose | Version |
-|---------|---------|---------|
+|---------|---------|-------- |
 | `github.com/mark3labs/mcp-go` | MCP protocol SDK (server, transport, types) | latest stable |
-

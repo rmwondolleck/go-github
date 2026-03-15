@@ -41,7 +41,12 @@ run-name: "Issue Worker Agent"
 jobs:
   activation:
     needs: pre_activation
-    if: needs.pre_activation.outputs.activated == 'true'
+    if: >-
+      needs.pre_activation.outputs.activated == 'true' &&
+      (github.event.label.name == 'bug' ||
+       github.event.label.name == 'feature' ||
+       github.event.label.name == 'enhancement' ||
+       github.event.label.name == 'good-first-issue')
     runs-on: ubuntu-slim
     permissions:
       contents: read

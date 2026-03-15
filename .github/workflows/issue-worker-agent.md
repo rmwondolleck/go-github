@@ -28,13 +28,15 @@ Be professional, thorough, and solution-oriented. Explain your reasoning and app
 
 ## Trigger Conditions
 
-This workflow triggers when a label is added to an issue. 
+This workflow triggers when a label is added to an issue. The workflow is activated **only** when the triggering label is one of the processable labels below. Issues labeled with other labels (e.g., `agentic-workflows`, `question`, `documentation`) will not activate this workflow at all.
 
 **Only process** issues that have been triaged with one of these labels:
 - `bug`
 - `feature`
 - `enhancement`
 - `good-first-issue`
+
+> **Note for maintainers**: The processable labels list is also enforced at the workflow activation level in the lock file (in the `activation` job's `if:` condition). When adding new processable labels, update both this list and the label filter in `issue-worker-agent.lock.yml`.
 
 **Skip and exit with noop** if the issue has any of these labels:
 - `question` (requires human response)

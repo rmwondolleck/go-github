@@ -57,6 +57,8 @@ Process all open PRs in the repository and create a consolidated integration bra
 - There are fewer than 2 open PRs to integrate
 - An integration PR is already open (title starts with "Epic:")
 - The triggering issue is labeled `blocked`, `wip`, `on-hold`, or `needs-discussion`
+- After filtering, no eligible PRs remain (all were filtered out due to draft status, labels, blocked issues, etc.)
+- The integration results in no actual file changes on the epic branch (all changes already merged into `main`)
 
 ### PR Label Trigger (pull_request: labeled)
 **Only process** when the label added is:
@@ -68,6 +70,8 @@ Process all open PRs in the repository and create a consolidated integration bra
 - There are fewer than 2 open PRs to integrate
 - An integration PR is already open (title starts with "Epic:")
 - The triggering PR is labeled `blocked`, `wip`, `on-hold`, or `needs-discussion`
+- After filtering, no eligible PRs remain (all were filtered out due to draft status, labels, blocked issues, etc.)
+- The integration results in no actual file changes on the epic branch (all changes already merged into `main`)
 
 ## Task
 
@@ -213,6 +217,31 @@ I'll proceed with the integration now.
    - Run a final consistency check across all integrated files
    - Ensure no duplicate imports, conflicting routes, or broken references
    - Add any necessary glue code (e.g., registering new routes in the server)
+
+### Step 5.5: Verify Epic Branch Has Actual Changes
+
+Before proceeding to Step 6, **verify** that the epic branch has at least one commit that differs from `main`:
+
+- Check whether any files were actually modified during the integration
+- If **no file changes** were committed to the epic branch (the epic branch is identical to `main`), this means all candidate PRs were either:
+  - Already merged into `main`
+  - Filtered out (draft, labeled `wip`/`do-not-integrate`, linked to a blocked issue, etc.)
+  - Resulting in empty diffs when applied
+
+**If no changes exist**: Do **not** call `create_pull_request`. Instead, call `noop` with a clear explanation:
+
+```markdown
+### No Integration Needed
+
+No file changes were committed to the epic branch. All candidate PRs were either:
+- Already merged into `main`
+- Filtered out due to workflow skip conditions (draft, wip, blocked, etc.)
+- Resulting in no net changes when applied
+
+No pull request was created.
+```
+
+Only proceed to Step 6 if the epic branch has one or more commits with actual file changes relative to `main`.
 
 ### Step 6: Create the Consolidated PR
 
